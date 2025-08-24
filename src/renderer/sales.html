@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سجل المبيعات</title>
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+  body,html{margin:0;padding:0;height:100%;background:linear-gradient(135deg,#f2f6fb,#e3ecf5 50%,#d9e4ef);color:#0d2d3a;}
+    .sales-shell{display:flex;flex-direction:column;min-height:100vh;}
+  header.sales-header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:2px solid #000;background:linear-gradient(120deg,#ffffff,#f3f7fb);position:sticky;top:0;z-index:40;box-shadow:0 4px 12px -6px rgba(0,0,0,0.18);}
+    header.sales-header h1{margin:0;font-size:22px;font-weight:800;}
+    .header-spacer{flex:1;}
+  button.btn{cursor:pointer;font-size:13px;font-weight:700;padding:9px 18px;border:2px solid #000;background:linear-gradient(135deg,#ffffff,#f3f9ff);border-radius:14px;transition:.25s cubic-bezier(.4,.2,.2,1);box-shadow:0 2px 4px rgba(0,0,0,0.06);} 
+  button.btn:hover{background:linear-gradient(135deg,#fff,#eaf4ff);transform:translateY(-2px);box-shadow:0 6px 14px -4px rgba(0,0,0,0.22);} 
+  button.btn:active{transform:translateY(0);box-shadow:0 2px 6px -2px rgba(0,0,0,0.25);} 
+  .search-bar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:2px solid #000;background:rgba(255,255,255,0.55);backdrop-filter:blur(6px);position:sticky;top:72px;z-index:35;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4);} 
+  .search-bar input{flex:1;border:2px solid #000;border-radius:16px;padding:10px 14px;font-size:14px;font-weight:600;background:#fffdfd;box-shadow:0 1px 2px rgba(0,0,0,0.06);} 
+  .search-bar input:focus{outline:none;box-shadow:0 0 0 3px #bcd9ff,0 1px 2px rgba(0,0,0,0.08);} 
+  .table-wrap{flex:1;padding:22px 24px;overflow:auto;background:linear-gradient(180deg,#f1f6fa,#eef3f7);} 
+  table{width:100%;border-collapse:separate;border-spacing:0;min-width:960px;} 
+  th,td{border:2px solid #000;padding:8px 10px;font-size:12px;text-align:center;background:#fff;font-weight:600;transition:background .15s ease;} 
+  th{background:linear-gradient(180deg,#f5f8fa,#e9eff4);font-weight:800;text-transform:uppercase;letter-spacing:.5px;} 
+  tbody tr:nth-child(even) td{background:#fafafa;} 
+  tbody tr:hover td{background:#e7f2fa;} 
+    .actions-cell button{margin:0 3px;}
+    /* Modal */
+  .modal-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.18);backdrop-filter:blur(3px);z-index:500;} 
+  .modal{background:linear-gradient(145deg,#ffffff,#f5f9fc);border:2px solid #000;border-radius:28px;width:880px;max-width:96vw;max-height:90vh;overflow:auto;padding:30px 34px;box-shadow:0 18px 40px -18px rgba(0,0,0,0.28),0 4px 10px -2px rgba(0,0,0,0.12);} 
+  .modal h2{margin:0 0 12px;font-size:22px;font-weight:800;text-align:center;background:linear-gradient(90deg,#0d2d3a,#13609c);-webkit-background-clip:text;background-clip:text;color:transparent;} 
+    .modal section{margin-bottom:16px;}
+    .modal table{min-width:100%;}
+  .close-modal{position:absolute;top:8px;left:10px;cursor:pointer;font-weight:800;font-size:16px;border:2px solid #000;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#fff;transition:.25s;} 
+  .close-modal:hover{background:#ffe5e5;transform:translateY(-2px);} 
+  .close-modal:active{transform:translateY(0);} 
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:10px;height:10px;} 
+  ::-webkit-scrollbar-track{background:#e2e8ef;border-radius:8px;} 
+  ::-webkit-scrollbar-thumb{background:#97b4c7;border:2px solid #e2e8ef;border-radius:8px;} 
+  ::-webkit-scrollbar-thumb:hover{background:#6f95ac;} 
+  /* Animations */
+  .sales-shell, .modal{animation:fadeSlide .45s ease;} 
+  @keyframes fadeSlide{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);} } 
+  /* Dark mode placeholder */
+  body.dark{background:#0d1c26;} body.dark header.sales-header{background:#132a37;color:#fff;} body.dark th{background:#173848;color:#e9f3fa;} 
+    @media (max-width:640px){ th,td{font-size:11px;padding:6px;} .modal{padding:20px 22px;} }
+  </style>
+</head>
+<body class="dashboard-mode">
+  <div class="sales-shell">
+    <header class="sales-header">
+      <button id="backBtn" class="btn" style="min-width:90px;">⟵ رجوع</button>
+      <h1>سجل المبيعات</h1>
+      <div class="header-spacer"></div>
+  <button id="btnShowSaleReturn" class="btn" style="background:#fff5d6;">مرتجع مبيعات</button>
+    </header>
+    <div class="search-bar">
+      <input type="text" id="salesSearch" placeholder="بحث في الفواتير (بالرقم أو العميل)" disabled>
+    </div>
+    <div class="table-wrap">
+      <table id="salesTable">
+        <thead>
+          <tr>
+            <th>رقم الفاتورة</th>
+            <th>التاريخ</th>
+            <th>العميل</th>
+            <th>قبل الضريبة</th>
+            <th>الضريبة</th>
+            <th>الصافي</th>
+            <th>طريقة الدفع</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="salesTbody"></tbody>
+      </table>
+      <div id="paginationBar" style="margin-top:14px;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700;flex-wrap:wrap;">
+        <button id="pgPrev" class="btn" disabled style="min-width:90px;">السابق</button>
+        <button id="pgNext" class="btn" disabled style="min-width:90px;">التالي</button>
+        <span id="pgInfo" style="min-width:160px;">0 / 0</span>
+        <label style="display:flex;align-items:center;gap:6px;">حجم الصفحة
+          <select id="pgSize" style="border:2px solid #000;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:600;">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+        <span id="pgTotal" style="margin-right:auto;color:#0d2d3a;">الإجمالي: 0</span>
+      </div>
+    </div>
+  </div>
+  <div id="saleViewModal" class="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="saleViewTitle">
+      <button class="close-modal" id="closeSaleModal">×</button>
+      <h2 id="saleViewTitle" style="display:flex;align-items:center;justify-content:center;gap:16px;">
+        <span>تفاصيل الفاتورة</span>
+        <button id="editSaleBtn" class="btn" style="padding:6px 14px;font-size:12px;background:#fff5e0;border-radius:14px;">✎ تعديل</button>
+      </h2>
+      <section id="saleSummarySection"></section>
+      <section>
+        <table id="saleItemsTable">
+          <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+  <script src="navigation.js"></script>
+  <!-- لوحة مرتجع المبيعات (مضمنة) -->
+  <div id="saleReturnPanel" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.25);backdrop-filter:blur(2px);">
+    <div style="background:#fff;border:2px solid #000;width:100%;height:100%;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:2px solid #000;background:#f7f9fb;">
+        <h2 style="margin:0;font-size:18px;font-weight:800;background:linear-gradient(90deg,#0d2d3a,#13609c);-webkit-background-clip:text;background-clip:text;color:transparent;">مرتجع مبيعات</h2>
+        <div style="flex:1"></div>
+        <button id="closeSaleReturnPanel" class="btn" style="border:2px solid #000;background:#fff;border-radius:14px;">إغلاق</button>
+      </div>
+      <div style="display:grid;grid-template-columns:360px 1fr;flex:1;min-height:0;">
+        <div style="border-left:2px solid #000;padding:14px 16px;display:flex;flex-direction:column;gap:14px;background:#fafafa;overflow:auto;">
+          <fieldset style="border:2px solid #000;border-radius:20px;padding:12px 14px;">
+            <legend style="padding:0 6px;font-weight:800;font-size:13px;">فاتورة بيع</legend>
+            <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;margin-bottom:8px;">رقم الفاتورة
+              <div style="display:flex;gap:6px;">
+                <input id="saleRetInvoiceSearch" type="text" style="flex:1;border:2px solid #000;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:600;" placeholder="أدخل رقم الفاتورة" />
+                <button id="saleRetLoadInvoiceBtn" style="border:2px solid #000;border-radius:12px;padding:8px 14px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;">تحميل</button>
+              </div>
+            </label>
+            <div id="saleRetInvoiceMeta" style="font-size:11.5px;font-weight:600;min-height:32px;line-height:1.5;color:#222;">—</div>
+          </fieldset>
+          <fieldset style="border:2px solid #000;border-radius:20px;padding:12px 14px;">
+            <legend style="padding:0 6px;font-weight:800;font-size:13px;">تفاصيل البند</legend>
+            <div id="saleRetItemDetails" style="font-size:12px;font-weight:600;line-height:1.6;min-height:100px;">اختر بندًا من الجدول</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;">الكمية المرتجعة الآن
+                <input id="saleRetQtyInput" type="number" min="1" style="border:2px solid #000;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:600;" disabled />
+              </label>
+              <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;">سبب الإرجاع
+                <input id="saleRetReasonInput" type="text" placeholder="اختياري" style="border:2px solid #000;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:600;" disabled />
+              </label>
+              <button id="saleRetDoReturnBtn" style="border:2px solid #000;border-radius:16px;padding:10px 18px;font-size:13px;font-weight:800;background:#fff;cursor:pointer;" disabled>تنفيذ المرتجع</button>
+            </div>
+          </fieldset>
+          <fieldset style="border:2px solid #000;border-radius:20px;padding:10px 14px;">
+            <legend style="padding:0 6px;font-weight:800;font-size:13px;">السجل</legend>
+            <div id="saleRetLog" style="max-height:160px;overflow:auto;font-size:11.5px;font-weight:600;line-height:1.5;background:#fff;border:2px dashed #000;border-radius:16px;padding:8px 10px;">—</div>
+          </fieldset>
+          <div id="saleRetStatusBar" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;overflow:hidden;">
+          <div style="padding:10px 14px;font-size:13px;font-weight:700;border-bottom:2px solid #000;background:#fff;">بنود الفاتورة</div>
+          <div style="flex:1;overflow:auto;background:#f6f9fb;">
+            <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:760px;">
+              <thead><tr><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">المنتج</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">الكمية</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">مرتجع سابق</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">متبقي</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">السعر</th></tr></thead>
+              <tbody id="saleRetItemsTbody"></tbody>
+            </table>
+          </div>
+          <div style="padding:8px 14px;font-size:11.5px;font-weight:600;border-top:2px solid #000;background:#fff;">اختر بنداً ثم أدخل الكمية المراد إرجاعها.</div>
+          <div style="padding:10px 14px;">
+            <div style="max-height:160px;overflow:auto;border:2px solid #000;border-radius:18px;background:#fff;">
+              <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:640px;">
+                <thead><tr><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">التاريخ</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">الفاتورة</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">المنتج</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">الكمية</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">المبلغ</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">السبب</th></tr></thead>
+                <tbody id="saleRetHistoryTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="sales.js"></script>
+  <script>
+  // منطق لوحة مرتجع المبيعات
+  (function(){
+    const btnShow = document.getElementById('btnShowSaleReturn');
+    const panel = document.getElementById('saleReturnPanel');
+    const btnClose = document.getElementById('closeSaleReturnPanel');
+    const invoiceInput = document.getElementById('saleRetInvoiceSearch');
+    const loadBtn = document.getElementById('saleRetLoadInvoiceBtn');
+    const invoiceMeta = document.getElementById('saleRetInvoiceMeta');
+    const itemsTbody = document.getElementById('saleRetItemsTbody');
+    const itemDetails = document.getElementById('saleRetItemDetails');
+    const qtyInput = document.getElementById('saleRetQtyInput');
+    const reasonInput = document.getElementById('saleRetReasonInput');
+    const doReturnBtn = document.getElementById('saleRetDoReturnBtn');
+    const historyTbody = document.getElementById('saleRetHistoryTbody');
+    const logBox = document.getElementById('saleRetLog');
+    const statusBar = document.getElementById('saleRetStatusBar');
+    let currentSale=null; let statsMap={}; let selectedItem=null; let returnsHistory=[];
+
+  function showPanel(){ panel.style.display='block'; refreshHistory(); resetAll(); }
+  function hidePanel(){ window.location.href='index.html'; }
+    btnShow && btnShow.addEventListener('click', showPanel);
+    btnClose && btnClose.addEventListener('click', hidePanel);
+    panel && panel.addEventListener('mousedown', e=>{ if(e.target===panel) hidePanel(); });
+
+    async function refreshHistory(){
+      try{ const r = await window.api.saleReturnsList(); if(r.ok){ returnsHistory = r.rows||[]; } else returnsHistory=[]; }catch{ returnsHistory=[]; }
+      renderHistory();
+    }
+    function renderHistory(){
+      historyTbody.innerHTML = returnsHistory.slice(0,100).map(r=>`<tr><td>${(r.created_at||'').replace('T',' ').slice(0,16)}</td><td>${r.invoice_no||''}</td><td>${r.product_name||''}</td><td>${r.qty}</td><td>${r.amount.toFixed? r.amount.toFixed(2): r.amount}</td><td>${r.reason||''}</td></tr>`).join('') || '<tr><td colspan="6">لا يوجد</td></tr>';
+    }
+    function resetAll(){
+      invoiceMeta.textContent='—'; itemsTbody.innerHTML=''; itemDetails.textContent='اختر بندًا من الجدول';
+      qtyInput.value=''; qtyInput.disabled=true; reasonInput.value=''; reasonInput.disabled=true; doReturnBtn.disabled=true; selectedItem=null; statusBar.innerHTML='';
+    }
+    loadBtn && loadBtn.addEventListener('click', async ()=>{
+      const inv = (invoiceInput.value||'').trim(); if(!inv){ alert('أدخل رقم الفاتورة'); return; }
+      resetAll();
+      invoiceMeta.textContent='...تحميل';
+      try { const r = await window.api.saleGetByInvoice(inv); if(r.ok && r.sale){ currentSale = r.sale; invoiceMeta.innerHTML = `<b>العميل:</b> ${r.sale.customer_id? (r.sale.customer_id===0?'نقدًا': (r.sale.customer_name||'نقدًا')):'نقدًا'} | <b>التاريخ:</b> ${(r.sale.created_at||'').replace('T',' ').slice(0,16)} | <b>الصافي:</b> ${(r.sale.total||0).toFixed(2)} | <b>طريقة الدفع:</b> ${r.sale.pay_method||'-'}`; await loadStats(); renderItems(); log('تم تحميل الفاتورة'); }
+      else { invoiceMeta.textContent='غير موجودة'; currentSale=null; } } catch{ invoiceMeta.textContent='خطأ'; }
+    });
+    async function loadStats(){
+      statsMap={}; if(!currentSale) return; try{ const r = await window.api.saleReturnStats(currentSale.id); if(r.ok){ (r.rows||[]).forEach(s=>{ statsMap[s.item_id]=s.returned_qty; }); } }catch{ }
+    }
+    function renderItems(){
+      if(!currentSale){ itemsTbody.innerHTML=''; return; }
+      itemsTbody.innerHTML = currentSale.items.map(it=>{ const returned=statsMap[it.id]||0; const remain=(it.qty||0)-returned; return `<tr data-item="${it.id}" style="cursor:pointer;"><td>${it.product_name||''}</td><td>${it.qty}</td><td>${returned}</td><td>${remain}</td><td>${(it.price||0).toFixed? it.price.toFixed(2): it.price}</td></tr>`; }).join('');
+    }
+    itemsTbody.addEventListener('click', e=>{
+      const tr = e.target.closest('tr[data-item]'); if(!tr || !currentSale) return;
+      const id = parseInt(tr.dataset.item); const it = currentSale.items.find(x=>x.id===id); if(!it) return; const returned = statsMap[it.id]||0; const remain = (it.qty||0)-returned; if(remain<=0){ alert('لا متبقي يمكن إرجاعه'); return; }
+      selectedItem = it; itemDetails.innerHTML = `<div><b>المنتج:</b> ${it.product_name||''}</div><div><b>الكمية الأصلية:</b> ${it.qty}</div><div><b>تم إرجاعه سابقاً:</b> ${returned}</div><div><b>المتبقي:</b> ${remain}</div><div><b>السعر للوحدة:</b> ${(it.price||0).toFixed? it.price.toFixed(2): it.price}</div>`;
+      qtyInput.disabled=false; reasonInput.disabled=false; doReturnBtn.disabled=false; qtyInput.focus();
+    });
+    doReturnBtn.addEventListener('click', async ()=>{
+      if(!currentSale || !selectedItem) return;
+      const returned = statsMap[selectedItem.id]||0; const remain = (selectedItem.qty||0)-returned; const rq = parseFloat(qtyInput.value); if(!rq || rq<=0){ alert('كمية غير صالحة'); return; } if(rq>remain){ alert('يتجاوز المتبقي'); return; }
+      const reason = (reasonInput.value||'').trim();
+      try { const res = await window.api.saleReturnCreate({ sale_id: currentSale.id, item_id: selectedItem.id, qty: rq, reason }); if(res.ok){ log('تم المرتجع بنجاح'); await loadStats(); await refreshHistory(); renderItems(); // تحديث الحقل
+          const refundMsg = currentSale.pay_method==='cash'? 'هل تريد استرداد المبلغ النقدي؟' : (currentSale.pay_method==='credit'? 'تم خصم القيمة من رصيد العميل (آجل).' : '');
+          if(refundMsg && currentSale.pay_method==='cash'){ if(confirm(refundMsg)){ alert('سجّل استردادك يدوياً في الصندوق.'); } }
+          else if(refundMsg){ alert(refundMsg); }
+          qtyInput.value=''; reasonInput.value=''; selectedItem=null; itemDetails.textContent='اختر بندًا من الجدول'; qtyInput.disabled=true; reasonInput.disabled=true; doReturnBtn.disabled=true; }
+        else { alert(res.msg||'فشل المرتجع'); }
+      } catch(err){ alert('فشل المرتجع'); }
+    });
+    function log(msg){ const t = new Date().toLocaleTimeString(); logBox.innerHTML = `<div>[${t}] ${msg}</div>` + logBox.innerHTML; }
+    // دعم فتح مباشر بالهاش #return-sale
+    if(window.location.hash==='#return-sale'){ showPanel(); }
+  })();
+  </script>
+</body>
+</html>

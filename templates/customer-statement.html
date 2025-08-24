@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>كشف حساب عميل</title>
+<style>
+ @page { size:A4; margin:14mm; }
+ body { font-family:'Cairo','Tahoma',sans-serif; direction:rtl; margin:0; color:#111; }
+ header { text-align:center; margin-bottom:10px; }
+ h1,h2,h3 { margin:4px 0; font-weight:700; }
+ .meta { font-size:12px; text-align:right; line-height:1.5; }
+ .section-title { margin:14px 0 6px; font-size:14px; font-weight:700; text-align:right; }
+ table { width:100%; border-collapse:collapse; font-size:11px; }
+ th,td { border:1px solid #444; padding:4px 5px; }
+ th { background:#eee; }
+ tbody tr:nth-child(even){ background:#fafafa; }
+ .totals { margin-top:8px; font-size:12px; font-weight:600; }
+ .footer { position:fixed; bottom:5mm; left:0; right:0; text-align:center; font-size:10px; color:#555; }
+ .tag { background:#222; color:#fff; display:inline-block; padding:2px 6px; border-radius:6px; font-size:10px; margin-left:6px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="custName">العميل</h1>
+    <h3>كشف حساب عميل</h3>
+  </header>
+  <div class="meta" id="metaBox"></div>
+  <div class="totals" id="totalsBox"></div>
+  <div class="meta" id="rangeBox"></div>
+  <div class="section-title">الديون</div>
+  <table id="debtsTable"><thead><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>مدفوع</th><th>متبقٍ</th><th>ملاحظة</th></tr></thead><tbody></tbody></table>
+  <div class="section-title">المدفوعات</div>
+  <table id="paymentsTable"><thead><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody></tbody></table>
+  <div class="footer">تم التوليد <span id="genTime"></span></div>
+<script>
+(function(){
+  function qs(n){ return new URLSearchParams(location.search).get(n); }
+  async function load(){
+    const cid = qs('customer_id'); const start=qs('start'); const end=qs('end');
+    if(!cid){ document.body.innerHTML='<h2>لا يوجد معرف</h2>'; return; }
+    const r = await window.api.customerStatement({ customer_id: parseInt(cid), start, end });
+    if(!r.ok){ document.body.innerHTML='<h2>فشل: '+(r.msg||'خطأ')+'</h2>'; return; }
+    const d=r.data; const c=d.customer;
+    document.getElementById('custName').textContent = c.name + ' #' + c.id;
+    document.getElementById('genTime').textContent = new Date().toLocaleString('ar-SA');
+    document.getElementById('metaBox').innerHTML = 'هاتف: '+(c.phone||'-') + ' | رصيد: '+c.balance;
+    document.getElementById('rangeBox').textContent = 'الفترة: ' + (start||'من البداية') + ' → ' + (end||'حتى الآن');
+    document.getElementById('totalsBox').textContent = 'إجمالي الديون: '+d.totals.debtOriginal.toFixed(2)+' | المسدد: '+d.totals.paidAmount.toFixed(2)+' | المتبقي: '+d.totals.remaining.toFixed(2);
+    const db = document.querySelector('#debtsTable tbody');
+    db.innerHTML = d.debts.map(x=>{ const rem=(x.amount||0)-(x.paid_amount||0); return `<tr><td>${x.id}</td><td>${x.date}</td><td>${(x.amount||0).toFixed(2)}</td><td>${(x.paid_amount||0).toFixed(2)}</td><td>${rem.toFixed(2)}</td><td>${x.note||''}</td></tr>`; }).join('');
+    const pb = document.querySelector('#paymentsTable tbody');
+    pb.innerHTML = d.payments.map(p=> `<tr><td>${p.id}</td><td>${p.date}</td><td>${(p.amount||0).toFixed(2)}</td><td>${p.note||''}</td></tr>`).join('');
+  }
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>مخططات المبيعات</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+body{font-family:Tahoma,Arial,sans-serif;margin:0;background:#fff;color:#000;font-size:14px;}
+header{background:#000;color:#fff;padding:8px 12px;display:flex;align-items:center;gap:10px;}
+header h1{font-size:18px;margin:0;}
+select{border:2px solid #000;border-radius:4px;padding:4px 6px;}
+#chartsWrap{padding:12px;display:flex;flex-wrap:wrap;gap:16px;}
+.chart-box{background:#fff;border:2px solid #000;border-radius:10px;padding:10px 14px;flex:1 1 420px;min-width:340px;position:relative;}
+#timelineChart,#payChart{width:100%;}
+.small{font-size:11px;color:#444;}
+.legend{display:flex;gap:12px;margin-top:6px;font-size:12px;}
+.lg{display:inline-flex;align-items:center;gap:4px;}
+.lg i{width:14px;height:14px;border:1px solid #000;border-radius:4px;display:inline-block;}
+</style>
+</head>
+<body>
+<header>
+  <h1>مخططات المبيعات</h1>
+  <label style="margin-right:auto;">المدى
+    <select id="periodSel">
+      <option value="today">اليوم</option>
+      <option value="week">هذا الأسبوع</option>
+      <option value="month" selected>هذا الشهر</option>
+      <option value="year">هذه السنة</option>
+    </select>
+  </label>
+</header>
+<div id="chartsWrap">
+  <div class="chart-box" style="flex:2 1 640px;">
+    <div id="chartIndicators" class="small" style="margin:2px 0 8px;padding:6px 8px;border:1px dashed #7d8b99;border-radius:8px;background:#f2f6f9;display:flex;flex-wrap:wrap;gap:14px;">
+      <span>أعلى يوم: <b id="indPeakDay">-</b> (<span id="indPeakVal">0</span>)</span>
+      <span>متوسط يومي: <b id="indAvgDay">0</b></span>
+      <span>عدد الأيام: <b id="indDays">0</b></span>
+      <span>نسبة الآجل: <b id="indCreditPct">0%</b></span>
+    </div>
+    <h4 style="margin:4px 0 10px;">المخطط الزمني (عدد الفواتير)</h4>
+    <canvas id="timelineChart"></canvas>
+  </div>
+  <div class="chart-box">
+    <h4 style="margin:4px 0 10px;">توزيع طرق الدفع</h4>
+    <canvas id="payChart"></canvas>
+    <div class="legend">
+      <span class="lg"><i style="background:#16a34a"></i> نقد</span>
+      <span class="lg"><i style="background:#dc2626"></i> آجل</span>
+    </div>
+  </div>
+</div>
+<script>
+const periodSel = document.getElementById('periodSel');
+function fmt(n){ return (n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+let chartCtx, payCtx;
+async function loadSummary(){
+  const r = await window.api.reportSalesSummary(periodSel.value);
+  if(r.ok) renderTimelineChart(r.data.timeline||[]);
+  loadDetails();
+}
+async function loadDetails(){
+  const r = await window.api.reportSalesDetails(periodSel.value, '');
+  if(!r.ok) return; const rows = r.rows||[];
+  let cash=0, credit=0; rows.forEach(s=>{ if(s.pay_method==='cash') cash+=s.total||0; else if(s.pay_method==='credit') credit+=s.total||0; });
+  renderPayChart(cash, credit);
+}
+function renderTimelineChart(timeline){
+  const canvas = document.getElementById('timelineChart');
+  if(!chartCtx) chartCtx = canvas.getContext('2d');
+  const targetH = Math.max(160, Math.min(window.innerHeight * 0.45, 340));
+  canvas.height = targetH;
+  chartCtx.clearRect(0,0,canvas.width,canvas.height);
+  const labels = timeline.map(x=>x.date); const vals = timeline.map(x=>x.count);
+  if(!labels.length){ chartCtx.fillStyle='#666'; chartCtx.font='14px Tahoma'; chartCtx.fillText('لا بيانات',20,40); return; }
+  const w = canvas.width = canvas.clientWidth; const h = canvas.height; const pad=34;
+  const max = Math.max(...vals,1); const bw = (w - pad*2)/vals.length * 0.55;
+  vals.forEach((v,i)=>{ const x= pad + (i+0.15)*((w-pad*2)/vals.length); const barH=(h-pad*2)*(v/max); const y=h-pad-barH; chartCtx.fillStyle='#0d63c7'; chartCtx.fillRect(x,y,bw,barH); chartCtx.fillStyle='#000'; chartCtx.font='11px Tahoma'; chartCtx.fillText(v,x+(bw/4),y-4); chartCtx.save(); chartCtx.translate(x+bw/2,h-8); chartCtx.rotate(-0.82); chartCtx.fillText(labels[i].slice(5),-14,4); chartCtx.restore(); });
+  // indicators
+  let peakVal=0, peakDay='-'; vals.forEach((v,i)=>{ if(v>peakVal){ peakVal=v; peakDay=labels[i]; } });
+  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+  document.getElementById('indPeakDay').textContent=peakDay;
+  document.getElementById('indPeakVal').textContent=peakVal;
+  document.getElementById('indAvgDay').textContent=fmt(avg);
+  document.getElementById('indDays').textContent=vals.length;
+}
+function renderPayChart(cash, credit){
+  const canvas = document.getElementById('payChart'); if(!payCtx) payCtx = canvas.getContext('2d');
+  const dynH = Math.max(180, Math.min(window.innerHeight * 0.38, 300)); canvas.height = dynH;
+  payCtx.clearRect(0,0,canvas.width,canvas.height);
+  const total=cash+credit; if(total<=0){ payCtx.fillStyle='#666'; payCtx.font='14px Tahoma'; payCtx.fillText('لا بيانات',20,40); return; }
+  const cx=canvas.width/2; const cy=canvas.height/2; const r=Math.min(cx,cy)-12; const ir=r*0.56; let start=-Math.PI/2;
+  const segs=[{label:'cash',value:cash,color:'#16a34a'},{label:'credit',value:credit,color:'#dc2626'}];
+  segs.forEach(seg=>{ if(seg.value<=0) return; const angle=(seg.value/total)*Math.PI*2; payCtx.beginPath(); payCtx.moveTo(cx,cy); payCtx.fillStyle=seg.color; payCtx.arc(cx,cy,r,start,start+angle); payCtx.closePath(); payCtx.fill(); seg.mid=start+angle/2; start+=angle; });
+  payCtx.globalCompositeOperation='destination-out'; payCtx.beginPath(); payCtx.arc(cx,cy,ir,0,Math.PI*2); payCtx.fill(); payCtx.globalCompositeOperation='source-over';
+  payCtx.fillStyle='#000'; payCtx.font='12px Tahoma'; segs.forEach(seg=>{ if(seg.value<=0) return; const ang=seg.mid; const tx=cx+Math.cos(ang)*(ir+(r-ir)/2-4); const ty=cy+Math.sin(ang)*(ir+(r-ir)/2-4); payCtx.fillText(((seg.value/total)*100).toFixed(1)+'%', tx-14, ty+4); });
+  const creditPct = total>0? (credit/total*100).toFixed(1)+'%' : '0%'; document.getElementById('indCreditPct').textContent=creditPct;
+}
+periodSel.addEventListener('change', ()=>{ loadSummary(); });
+window.api.onChartsSetPeriod(p=>{ periodSel.value=p; loadSummary(); });
+window.addEventListener('resize', ()=>{ loadSummary(); });
+loadSummary();
+</script>
+</body>
+</html>

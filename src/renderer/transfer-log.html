@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>سجل النقل</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+    body{margin:0;background:#fff;color:#000;font-size:14px;}
+    header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:2px solid #fff;background:#000;color:#fff;}
+    header h1{margin:0;font-size:20px;font-weight:700;}
+    .spacer{flex:1;}
+    button{font-family:inherit;cursor:pointer;border:2px solid #fff;background:#000;color:#fff;padding:6px 12px;font-size:13px;font-weight:700;border-radius:4px;}
+    button:hover{background:#111;}
+    #searchBar{padding:10px 14px;border-bottom:2px solid #000;display:flex;gap:8px;align-items:center;background:#f5f5f5;}
+    #searchBar input{flex:1;padding:8px 10px;border:2px solid #000;border-radius:4px;font-size:13px;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{border:2px solid #000;padding:6px 8px;text-align:center;font-size:12px;}
+    th{background:#eee;font-size:13px;}
+    tbody tr:nth-child(even){background:#fafafa;}
+    tbody tr:hover{background:#e6e6e6;}
+  </style>
+</head>
+<body>
+  <header>
+    <button id="backBtn">رجوع</button>
+    <h1>سجل النقل</h1>
+    <div class="spacer"></div>
+    <button id="exportCsvBtn">تصدير CSV</button>
+    <button id="exportXlsBtn">تصدير Excel</button>
+  </header>
+  <div id="searchBar">
+    <input id="searchInput" placeholder="ابحث في السجل (المنتج / المخزن)" />
+    <span id="countInfo" style="font-size:12px;font-weight:700;">-</span>
+  </div>
+  <div style="padding:10px 14px;">
+    <table id="logTable">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>المستخدم</th>
+          <th>من المخزن</th>
+          <th>إلى المخزن</th>
+          <th>المنتج</th>
+          <th>الكمية</th>
+          <th>الملاحظة</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="navigation.js"></script>
+  <script>
+    const tbody = document.querySelector('#logTable tbody');
+    const searchInput = document.getElementById('searchInput');
+    const backBtn = document.getElementById('backBtn');
+    const countInfo = document.getElementById('countInfo');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const exportXlsBtn = document.getElementById('exportXlsBtn');
+    let cache=[]; let filtered=[];
+
+    function escapeHtml(str){ return (str||'').toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+    async function loadLog(){
+      try {
+        const r = await window.api.auditLogList(500);
+        if(r && r.ok){ cache = r.rows||[]; applyFilter(); }
+      } catch{}
+    }
+
+    function applyFilter(){
+      const q = searchInput.value.trim().toLowerCase();
+      filtered = cache.filter(r=>{
+        if(!q) return true;
+        return (
+          (r.product_name||'').toLowerCase().includes(q) ||
+          (r.from_store_name||'').toLowerCase().includes(q) ||
+          (r.to_store_name||'').toLowerCase().includes(q)
+        );
+      });
+      render();
+    }
+
+    function render(){
+      tbody.innerHTML='';
+      if(!filtered.length){
+        const tr=document.createElement('tr');
+        const td=document.createElement('td'); td.colSpan=7; td.textContent='لا توجد عمليات'; tr.appendChild(td); tbody.appendChild(tr);
+        countInfo.textContent='0'; return;
+      }
+      filtered.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(r.ts||'')}</td>
+          <td>${escapeHtml(r.user_name||'')}</td>
+          <td>${escapeHtml(r.from_store_name||'')}</td>
+          <td>${escapeHtml(r.to_store_name||'')}</td>
+          <td>${escapeHtml(r.product_name||'')}</td>
+          <td>${r.qty||0}</td>
+          <td>${escapeHtml(r.note||'')}</td>`;
+        tbody.appendChild(tr);
+      });
+      countInfo.textContent = filtered.length;
+    }
+
+    function exportCSV(){
+      const lines = ['timestamp,user,from_store,to_store,product,qty,note'];
+      filtered.forEach(r=>{
+        const row = [r.ts||'',r.user_name||'',r.from_store_name||'',r.to_store_name||'',r.product_name||'',r.qty||0,(r.note||'').replace(/"/g,'""')];
+        lines.push(row.map(v=>`"${v}"`).join(','));
+      });
+      const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='transfer-log.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500);
+    }
+    function exportXLS(){
+      let html='<table><tr><th>التاريخ</th><th>المستخدم</th><th>من</th><th>إلى</th><th>المنتج</th><th>الكمية</th><th>الملاحظة</th></tr>';
+      filtered.forEach(r=>{ html+=`<tr><td>${escapeHtml(r.ts||'')}</td><td>${escapeHtml(r.user_name||'')}</td><td>${escapeHtml(r.from_store_name||'')}</td><td>${escapeHtml(r.to_store_name||'')}</td><td>${escapeHtml(r.product_name||'')}</td><td>${r.qty||0}</td><td>${escapeHtml(r.note||'')}</td></tr>`; });
+      html+='</table>';
+      const blob = new Blob(['\ufeff'+html], {type:'application/vnd.ms-excel'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='transfer-log.xls'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500);
+    }
+
+    searchInput.addEventListener('input', applyFilter);
+    backBtn.addEventListener('click', ()=>{ window.location='index.html'; });
+    exportCsvBtn.addEventListener('click', exportCSV);
+    exportXlsBtn.addEventListener('click', exportXLS);
+
+    loadLog();
+  </script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+body,html{margin:0;padding:0;font-family:'Cairo','Tahoma','Noto Sans Arabic',sans-serif;background:linear-gradient(145deg,#eef2f6,#dde5ec);color:#1e2430;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}
+/* خلفية لوحة التحكم الجديدة (بدون صور خارجية) */
+body.dashboard-mode{position:relative;background:
+	radial-gradient(circle at 62% 28%,#fafbfc 0%,#f1f4f7 38%,#e9edf1 68%,#e3e8ed 100%);
+	background-attachment:fixed;color:#102e2f;}
+/* طبقة شعار وسط الشاشة + شفافية 60% */
+body.dashboard-mode .center-brand-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;z-index:0;font-family:'Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+body.dashboard-mode .center-brand-overlay .brand-name-big{font-size:120px;font-weight:800;letter-spacing:3px;line-height:1;background:linear-gradient(135deg,#0d4d92,#06263e);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.70;text-shadow:0 10px 34px rgba(0,0,0,0.30);} 
+body.dashboard-mode .center-brand-overlay .copyright-line{margin-top:24px;font-size:14px;font-weight:600;letter-spacing:.6px;color:#000;opacity:.70;text-shadow:0 2px 10px rgba(0,0,0,0.25);} 
+/* جعل المحتوى فوق الطبقة */
+.pos-shell,.dashboard-shell{position:relative;z-index:2;}
+/* شبكة وخطوط تقنية خفيفة */
+body.dashboard-mode:before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:
+	repeating-linear-gradient(to right,rgba(120,140,160,0.04) 0 1px,transparent 1px 120px),
+	repeating-linear-gradient(to bottom,rgba(120,140,160,0.04) 0 1px,transparent 1px 120px),
+	repeating-linear-gradient(45deg,transparent 0 38px,rgba(200,210,220,0.03) 38px 39px),
+	radial-gradient(circle at 18% 24%,rgba(90,120,150,0.05) 0 3px,transparent 4px),
+	radial-gradient(circle at 72% 68%,rgba(90,120,150,0.05) 0 3px,transparent 4px),
+	radial-gradient(circle at 42% 78%,rgba(90,120,150,0.04) 0 3px,transparent 4px),
+	radial-gradient(circle at 84% 32%,rgba(90,120,150,0.045) 0 3px,transparent 4px);
+	mix-blend-mode:normal;opacity:.65;}
+/* طبقة رموز تقنية (أسهم واتجاهات وحركة) بعتامة 50% */
+body.dashboard-mode:after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.28;background:
+	conic-gradient(from 45deg at 15% 40%,rgba(40,70,110,0.10) 0 16deg,transparent 16deg 360deg),
+	conic-gradient(from 135deg at 65% 20%,rgba(40,70,110,0.09) 0 16deg,transparent 16deg 360deg),
+	conic-gradient(from -45deg at 30% 75%,rgba(40,70,110,0.085) 0 16deg,transparent 16deg 360deg),
+	conic-gradient(from 225deg at 80% 70%,rgba(40,70,110,0.085) 0 16deg,transparent 16deg 360deg),
+	repeating-linear-gradient(90deg,transparent 0 56px,rgba(120,140,160,0.025) 56px 57px),
+	repeating-linear-gradient(0deg,transparent 0 56px,rgba(120,140,160,0.025) 56px 57px);
+	mix-blend-mode:normal;}
+/* التأكد أن محتوى اللوحة فوق الخلفيات */
+.dashboard-shell{position:relative;z-index:1;}
+:root{--login-field-height:64px;/* رفع ارتفاع خانات الدخول مرة أخرى */}
+#app{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+#app{height:100%;}
+.app-container{padding:0;height:100%;}
+.login-shell{display:flex;flex-direction:row;width:100%;height:100%;position:relative;}
+.login-wrapper{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.login-shell.login-container{--f:.65;filter:drop-shadow(0 12px 26px rgba(0,0,0,0.30));width:100%;height:100%;}
+/* تقليص فعلي للأبعاد الرئيسية بدلاً من transform */
+.login-shell.login-container .form-side{padding:calc(46px * var(--f)) calc(52px * var(--f));}
+.login-shell.login-container .form-container{padding:calc(50px * var(--f)) calc(48px * var(--f)) calc(42px * var(--f)) calc(48px * var(--f));border-radius:calc(30px * var(--f));max-width:calc(420px * var(--f));}
+.login-shell.login-container .login-panel{max-width:calc(380px * var(--f));}
+.login-shell.login-container .lock-icon{width:calc(60px * var(--f));height:calc(60px * var(--f));border-radius:calc(18px * var(--f));}
+.login-shell.login-container .lock-icon svg{width:calc(38px * var(--f));height:calc(38px * var(--f));}
+.login-shell.login-container .login-title-block{gap:calc(18px * var(--f));margin:calc(10px * var(--f)) 0 calc(24px * var(--f));}
+.login-shell.login-container .form-title{font-size:calc(30px * var(--f));letter-spacing:.8px;font-weight:900;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+.login-shell.login-container .input{padding:calc(14px * var(--f)) calc(16px * var(--f));border-radius:calc(16px * var(--f));font-size:calc(15px * var(--f));}
+.login-shell.login-container #usernameSelect,#usernameSelect option,.login-shell.login-container #password{font-size:calc(18px * var(--f));font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;font-weight:600;}
+.login-shell.login-container .big-input{height:calc(46px * var(--f));}
+.login-shell.login-container .pwd-wrapper{height:calc(var(--login-field-height) * var(--f));}
+.login-shell.login-container .toggle-pwd{padding:calc(6px * var(--f)) calc(14px * var(--f));font-size:calc(12px * var(--f));border-radius:calc(14px * var(--f));}
+.login-shell.login-container .btn{padding:calc(12px * var(--f)) calc(22px * var(--f));border-radius:calc(14px * var(--f));font-size:calc(14px * var(--f));}
+.login-shell.login-container .main-btn{height:calc(48px * var(--f));}
+.login-shell.login-container .bigger-btn{height:calc(58px * var(--f));font-size:calc(17px * var(--f));}
+.login-shell.login-container .exit-btn.corner{padding:calc(10px * var(--f)) calc(26px * var(--f));font-size:calc(15px * var(--f));border-radius:calc(18px * var(--f));}
+/* تكبير زر الخروج (خارج البطاقة) قليلاً لآخر طلب */
+.login-shell.login-container .exit-btn.corner{padding:calc(14px * var(--f)) calc(34px * var(--f));font-size:calc(17px * var(--f));border-radius:calc(22px * var(--f));}
+.login-shell.login-container .hint-line,.login-shell.login-container .login-footer{font-size:calc(15px * var(--f));font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;font-weight:700;}
+.login-shell.login-container .remember-row{font-size:calc(16px * var(--f));font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;font-weight:700;}
+.login-shell.login-container .field-label{font-size:calc(13px * var(--f));}
+.login-shell.login-container .brand-name{font-size:calc(46px * var(--f));}
+.login-shell.login-container .slogan{font-size:calc(15px * var(--f));}
+.login-shell.login-container .lock-icon{font-size:calc(54px * var(--f));}
+/* أزيلت الأيقونة الكبيرة - احتفظنا بالعنوان فقط */
+.big-login-title{margin-top:4px;}
+.login-title-stack{flex-direction:column !important;gap:10px !important;}
+.login-top-icon{width:120px;height:120px;display:flex;align-items:center;justify-content:center;margin:10px auto 0 auto;filter:drop-shadow(0 16px 32px rgba(13,77,146,0.32));animation:fadePop .9s ease;}
+.login-top-icon svg{width:100%;height:100%;}
+.lowered-title{margin-top:0 !important;}
+@keyframes fadePop{0%{transform:translateY(-18px) scale(.85);opacity:0;}60%{transform:translateY(4px) scale(1.04);opacity:1;}100%{transform:translateY(0) scale(1);} }
+.login-form-column{padding-top:40px !important;}
+.pushed-form{margin-top:28px;}
+.login-btn-spaced{margin-top:14px;}
+.login-footer.fixed-bottom{position:absolute;bottom:18px;right:90px;left:auto;text-align:right;z-index:60;min-width:unset;display:block;padding:4px 0;}
+/* بطاقة منسقة لحقول الدخول */
+.login-form-card{width:100%;max-width:380px;margin:4px auto 0 auto;background:rgba(255,255,255,0.55);border:1px solid rgba(13,77,146,0.18);backdrop-filter:blur(9px) saturate(150%);-webkit-backdrop-filter:blur(9px) saturate(150%);padding:24px 28px 30px 28px;border-radius:28px;box-shadow:0 10px 28px -10px rgba(0,0,0,0.2),0 4px 14px -6px rgba(0,0,0,0.16),inset 0 0 0 1px rgba(255,255,255,0.55);position:relative;left:12px;top:-18px;transition:.35s;} 
+.tidy-login-form{margin:0;}
+.login-fields{display:flex;flex-direction:column;gap:24px;}
+.compact-field .big-lbl{margin-bottom:4px;display:block;}
+.narrow-field{max-width:300px;margin-inline:auto;width:100%;}
+.narrow-field select.input,.narrow-field .pwd-wrapper{max-width:100%;}
+/* تقليل حجم النص داخل الحقول عند تقليل العرض ليبقى التناسب بصري */
+.narrow-field select.input,#loginForm .narrow-field .pwd-wrapper .input{font-size:16px !important;}
+/* ضبط زر إظهار/إخفاء */
+.narrow-field .toggle-pwd{font-size:11px !important;padding:5px 12px;}
+.login-inline-row{display:flex;align-items:center;justify-content:space-between;margin-top:-2px;}
+.remember-row.in-card{margin-top:0;}
+.login-actions{margin-top:-6px;}
+.login-actions .login-btn-spaced{margin-top:4px;}
+/* لم تعد هناك مراحل توسعة، البطاقة ثابتة العرض حتى يكسر العرض الكلي */
+
+@media (max-width:900px){
+	.login-form-card{max-width:100%;padding:22px 22px 28px 22px;border-radius:26px;left:0;top:0;}
+	.login-fields{gap:18px;}
+	/* في الشاشات الصغيرة أعد محاذاة التذييل للوسط */
+	.login-footer.fixed-bottom{right:0;left:0;text-align:center;}
+}
+/* ضبط نسبي داخل وضع التصغير لضمان تناسق طبيعي */
+.login-shell.shrink-structure .form-side{padding:calc(46px * .75) calc(52px * .75);} 
+.login-shell.shrink-structure .form-container{padding:calc(50px * .75) calc(48px * .75) calc(42px * .75) calc(48px * .75);border-radius:calc(30px * .75);} 
+.login-shell.shrink-structure .lock-icon{width:calc(60px * .75);height:calc(60px * .75);border-radius:calc(18px * .75);} 
+.login-shell.shrink-structure .lock-icon svg{width:calc(38px * .75);height:calc(38px * .75);} 
+.login-shell.shrink-structure .form-title{font-size:calc(30px * .75);font-weight:800;} 
+.login-shell.shrink-structure .login-title-block{gap:calc(18px * .75);margin:calc(10px * .75) 0 calc(24px * .75);} 
+.login-shell.shrink-structure .input{padding:calc(14px * .75) calc(16px * .75);border-radius:calc(16px * .75);font-size:calc(15px * .75);} 
+.login-shell.shrink-structure #usernameSelect,#usernameSelect option,.login-shell.shrink-structure #password{font-size:calc(19px * .75);} 
+.login-shell.shrink-structure .big-input{height:calc(56px * .75);} 
+.login-shell.shrink-structure .pwd-wrapper{height:calc(var(--login-field-height) * .75);} 
+.login-shell.shrink-structure .toggle-pwd{padding:calc(6px * .75) calc(14px * .75);font-size:calc(12px * .75);border-radius:calc(14px * .75);} 
+.login-shell.shrink-structure .btn{padding:calc(14px * .75) calc(26px * .75);border-radius:calc(16px * .75);font-size:calc(16px * .75);} 
+.login-shell.shrink-structure .main-btn{height:calc(48px * .75);} 
+.login-shell.shrink-structure .bigger-btn{height:calc(58px * .75);font-size:calc(17px * .75);} 
+.login-shell.shrink-structure .exit-btn.corner{padding:calc(10px * .75) calc(26px * .75);font-size:calc(15px * .75);border-radius:calc(18px * .75);} 
+.login-shell.shrink-structure .hint-line,.login-shell.shrink-structure .login-footer{font-size:calc(12.5px * .75);} 
+.login-shell.shrink-structure .remember-row{font-size:calc(13px * .75);} 
+.login-shell.shrink-structure .field-label{font-size:calc(13px * .75);} 
+.login-shell.shrink-structure .lock-icon{font-size:calc(54px * .75);} 
+.login-shell.shrink-structure .brand-name{font-size:calc(46px * .75);} 
+.login-shell.shrink-structure .slogan{font-size:calc(15px * .75);} 
+.login-shell:before{content:'';position:absolute;inset:0;pointer-events:none;}
+.login-shell>*{box-sizing:border-box;}
+.unified-bg{background:linear-gradient(125deg,#eef2f6,#dbe2ea 38%,#0d4d92 38%,#1f5f9f 72%,#134a84);} /* legacy not used now */
+.login-half{flex:1;display:flex;align-items:center;justify-content:center;position:relative;padding:26px;}
+.login-panel{width:100%;max-width:380px;position:relative;padding-top:56px;}
+.glass{background:rgba(255,255,255,0.30);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border:1px solid rgba(255,255,255,0.50);border-radius:28px;padding:34px 30px;box-shadow:4px 4px 8px rgba(0,0,0,0.08),-4px -4px 8px rgba(255,255,255,0.6);} 
+.glass.tight{padding:30px 28px;}
+.glass-title{font-size:23px;font-weight:700;margin-bottom:14px;text-align:center;letter-spacing:.5px;color:#123655;}
+.exit-btn{position:absolute;top:10px;left:10px;background:#ff4d4d;border:none;padding:6px 14px;border-radius:14px;font-size:14px;cursor:pointer;color:#fff;font-weight:600;box-shadow:0 4px 10px rgba(0,0,0,0.18);z-index:40;transition:.2s;}
+.exit-btn:hover{background:#e63a3a;}
+.exit-btn:active{transform:scale(.92);} 
+/* removed composite variant */
+/* V2 Login Layout */
+.login-v2{font-size:14px;}
+.visual-side{flex:0 0 50%;max-width:50%;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:0;}
+.visual-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.9) saturate(1.05);opacity:0;animation:fadeIn 0.9s ease forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+.visual-overlay{position:absolute;inset:0;background:linear-gradient(115deg,rgba(6,36,62,.85),rgba(15,68,130,.55),rgba(15,68,130,.15));backdrop-filter:blur(2px);}
+.visual-text-box{position:relative;z-index:2;background:rgba(25,38,55,0.55);border:1px solid rgba(255,255,255,0.18);padding:34px 38px 30px 38px;border-radius:28px;max-width:380px;color:#fff;box-shadow:0 12px 40px -8px rgba(0,0,0,0.5);}
+.brand-name{margin:0 0 10px 0;font-size:46px;letter-spacing:1px;font-weight:700;background:linear-gradient(90deg,#ffffff,#b8dcff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.slogan{font-size:15px;line-height:1.7;opacity:.92;font-weight:500;}
+.form-side{flex:0 0 50%;max-width:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:46px 52px;background:linear-gradient(155deg,#f2f5f9,#dde4eb 65%,#e2e8ee);min-width:0;}
+.form-side.fill-half{padding:0;}
+.flat-fill{height:100%;border-radius:0;max-width:100%;padding:70px 70px 40px 70px;box-shadow:none;background:transparent;border:none;display:flex;flex-direction:column;justify-content:flex-start;}
+.slogan-top{font-size:16px;font-weight:600;color:#0d4d92;opacity:.9;margin:0 0 28px 0;text-align:center;}
+.big-input{font-size:17px;line-height:1.2;height:56px;}
+.big-input option{font-size:16px;}
+.inside{margin-top:auto;text-align:center;}
+.wide-btn{width:100%;}
+.swapped-right{order:2;}
+.form-side.fill-half .form-container{width:100%;}
+.no-panel{background:transparent;padding:60px 64px 38px 64px;align-items:flex-start;}
+.login-icon-large{font-size:54px;line-height:1;margin:20px 0 14px 0;color:#0d4d92;filter:drop-shadow(0 6px 12px rgba(13,77,146,.25));}
+.login-head{display:flex;align-items:center;gap:18px;margin-bottom:14px;}
+.exit-btn.big{position:static;padding:10px 26px;font-size:15px;border-radius:18px;box-shadow:0 6px 14px rgba(0,0,0,0.18);background:#ff5555;}
+.exit-btn.big:hover{background:#e64545;}
+.flat-grid{width:100%;max-width:520px;}
+.prominent-input{font-size:20px;height:64px;font-weight:600;}
+.prominent-input::placeholder{font-weight:400;font-size:16px;}
+.pwd-wrapper .prominent-input{padding-inline-end:100px;}
+.field-label{font-size:14px;}
+.centered-form{display:flex;flex-direction:column;align-items:center;}
+.login-title-block{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:18px;margin:10px 0 24px 0;}
+.lock-icon{width:60px;height:60px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d4d92,#2a6faf);border-radius:18px;box-shadow:0 8px 18px rgba(13,77,146,.35);} 
+.lock-icon svg{width:38px;height:38px;}
+.exit-btn.corner{position:absolute;top:16px;right:16px;left:auto;padding:10px 26px;font-size:15px;border-radius:18px;background:#ff5858;box-shadow:0 6px 16px -4px rgba(0,0,0,.3);} 
+.exit-btn.corner:hover{background:#e64848;}
+.wide-centered{align-items:center;}
+.field-centered{width:100%;max-width:520px;}
+.remember-centered{justify-content:center;width:100%;max-width:520px;}
+.centered-footer{width:100%;text-align:center;margin-top:34px;}
+.uniform-input{width:100%;}
+.big-lbl{font-size:34px;font-weight:800;color:#062f4d;font-family:'Changa','Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;letter-spacing:1.1px;line-height:1.18;text-shadow:0 2px 5px rgba(0,0,0,0.20);background:linear-gradient(90deg,rgba(13,77,146,0.08),rgba(13,77,146,0));padding:4px 10px 2px 10px;border-radius:14px;display:inline-block;}
+.bigger-btn{height:58px;font-size:17px;font-weight:600;letter-spacing:.5px;}
+.form-container{width:100%;max-width:420px;position:relative;background:#ffffffc7;border:1px solid #dbe2e9;backdrop-filter:blur(6px);border-radius:30px;padding:50px 48px 42px 48px;box-shadow:0 10px 28px -8px rgba(0,0,0,0.15),0 4px 14px -6px rgba(0,0,0,0.12);} 
+.form-title{margin:0 0 32px 0;font-size:30px;color:#123655;font-weight:900;text-align:center;letter-spacing:.8px;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field-label{font-size:13px;font-weight:600;color:#274b68;}
+.form-grid{display:flex;flex-direction:column;gap:18px;}
+.remember-row{display:flex;align-items:center;gap:10px;font-size:15px;color:#1f3750;font-weight:700;margin-top:-2px;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+.remember-row input{width:20px;height:20px;cursor:pointer;}
+.hint-line{font-size:15px;text-align:center;opacity:.9;margin-top:8px;font-weight:700;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+.main-btn{margin-top:6px;font-size:16px;height:48px;}
+.login-footer{margin-top:34px;font-size:15px;opacity:.95;color:#153d63;font-weight:700;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+
+@media (max-width:900px){
+	/* لا تطبق التعديلات إن كان هناك فئة تثبيت (للحفاظ على نفس الشكل بعد التصغير) */
+	body:not(.login-fixed) .visual-side{display:none;}
+	body:not(.login-fixed) .form-side{flex:1;padding:40px 34px;background:linear-gradient(160deg,#0d4d92,#2a6faf);}
+	body:not(.login-fixed) .form-container{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);box-shadow:0 8px 30px -8px rgba(0,0,0,0.55);} 
+	body:not(.login-fixed) .form-title{color:#fff;}
+	body:not(.login-fixed) .field-label{color:#e9f3ff;}
+	body:not(.login-fixed) .hint-line, body:not(.login-fixed) .login-footer{color:#fff;opacity:.65;}
+}
+.copyright-box{font-size:13px;opacity:.78;line-height:1.65;}
+.rtl{direction:rtl;text-align:right;}
+.card{background:#e3e7ed;border-radius:22px;box-shadow:9px 9px 18px #c2c6cc,-9px -9px 18px #ffffff;padding:28px;margin:0 auto;max-width:520px;}
+.title{font-size:30px;font-weight:800;margin-bottom:22px;text-align:center;letter-spacing:.8px;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+.btn{background:#e3e7ed;border:none;padding:14px 26px;border-radius:16px;font-size:16px;cursor:pointer;box-shadow:6px 6px 12px #c2c6cc,-6px -6px 12px #ffffff;transition:.18s;font-weight:600;}
+.btn:active{box-shadow:inset 6px 6px 12px #c2c6cc,inset -6px -6px 12px #ffffff;}
+.btn-primary{color:#fff;background:linear-gradient(135deg,#0d4d92,#2a6faf);box-shadow:0 6px 16px rgba(13,77,146,0.35);} 
+.btn-primary:active{box-shadow:inset 0 4px 10px rgba(0,0,0,0.25);} 
+.btn-primary.wide{width:100%;}
+.grid{display:grid;gap:14px;}
+.input{padding:14px 16px;border-radius:16px;border:1px solid #d0d4d9;background:#eef2f6;box-shadow:inset 2px 2px 4px rgba(0,0,0,0.08),inset -2px -2px 4px rgba(255,255,255,0.7);font-size:15px;transition:.2s;}
+.input:focus{outline:none;border-color:#2a6faf;box-shadow:0 0 0 3px rgba(13,77,146,0.25);} 
+.inline{display:flex;gap:12px;align-items:center;}
+.center{text-align:center;}
+.badge{display:inline-block;background:#0d4d92;color:#fff;padding:5px 11px;border-radius:14px;font-size:12px;box-shadow:0 4px 10px rgba(13,77,146,0.25);} 
+.link{color:#0d4d92;cursor:pointer;text-decoration:underline;}
+.warning{color:#a34900;font-weight:600;}
+.footer{margin-top:28px;font-size:12px;opacity:.7;text-align:center;}
+.separator{height:1px;background:linear-gradient(to right,transparent,#b9bec4,transparent);margin:18px 0;}
+.flex{display:flex;}
+.flex-between{justify-content:space-between;}
+.small{font-size:13px;line-height:1.5;}
+.rights{font-size:12px;opacity:.8;margin-top:16px;line-height:1.6;}
+.success{color:#0a7d32;font-weight:600;}
+.error{color:#b00020;font-weight:600;}
+.hidden{display:none;}
+.table{width:100%;border-collapse:collapse;}
+.table th,.table td{padding:8px 10px;border-bottom:1px solid #d0d4d9;font-size:14px;}
+.header-bar{display:flex;gap:16px;align-items:center;margin-bottom:22px;}
+.header-bar h1{font-size:22px;margin:0;font-weight:700;color:#0d4d92;}
+.nav-btn{background:transparent;border:none;font-size:14px;padding:10px 14px;border-radius:12px;box-shadow:6px 6px 12px #c2c6cc,-6px -6px 12px #ffffff;cursor:pointer;}
+.section{background:#eef2f6;border-radius:20px;padding:18px;box-shadow:4px 4px 10px rgba(0,0,0,0.08),-4px -4px 10px rgba(255,255,255,0.6);margin-bottom:20px;}
+
+/* Dashboard Layout */
+.dashboard-shell{display:flex;flex-direction:column;width:100%;height:100%;padding:14px 18px;box-sizing:border-box;overflow:hidden;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(145deg,#0d4d92,#1f5f9f);color:#fff;padding:6px 14px;border-radius:16px;box-shadow:0 4px 14px -6px rgba(0,0,0,0.45);position:sticky;top:8px;z-index:80;min-height:56px;backdrop-filter:blur(6px);} 
+.user-box{background:rgba(255,255,255,.18);padding:6px 14px;border-radius:12px;font-size:12.5px;font-weight:600;backdrop-filter:blur(6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 4px 10px -4px rgba(0,0,0,.4);color:#fff;display:flex;align-items:center;gap:6px;}
+.user-strip{margin:8px 0 4px 0;background:linear-gradient(120deg,rgba(255,255,255,0.65),rgba(255,255,255,0.35));border:1px solid rgba(255,255,255,0.55);padding:10px 18px;border-radius:14px;font-size:13.5px;font-weight:600;box-shadow:0 4px 14px -6px rgba(0,0,0,0.15),inset 0 0 0 1px rgba(255,255,255,0.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);} 
+.trial-box{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);padding:6px 14px;border-radius:14px;font-size:12px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.35);} 
+.trial-box .t-label{background:rgba(0,0,0,0.25);color:#fff;padding:3px 8px;border-radius:10px;font-size:11px;letter-spacing:.5px;} 
+.trial-box .t-rem{background:#ffe27a;color:#222;padding:3px 8px;border-radius:10px;font-weight:700;} 
+.trial-box .t-date{background:rgba(255,255,255,0.35);color:#102431;padding:3px 8px;border-radius:10px;font-weight:600;} 
+.trial-box.licensed{background:rgba(0,180,90,0.25);} 
+.trial-warn{color:#ffed00;font-weight:700;margin-inline-start:4px;} 
+.bar-left,.bar-right{display:flex;align-items:center;gap:8px;}
+.bar-mid{flex:1;display:flex;align-items:center;justify-content:center;}
+.dash-title{font-size:20px;margin:0;font-weight:700;letter-spacing:.5px;}
+.top-btn.back{background:rgba(255,255,255,0.22);font-weight:700;}
+.top-btn.back:hover{background:rgba(255,255,255,0.35);}
+.top-right{display:flex;gap:10px;}
+.top-btn{background:rgba(255,255,255,0.16);border:none;color:#fff;padding:10px 18px;border-radius:14px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.25);transition:.18s;}
+.top-btn:hover{background:rgba(255,255,255,0.28);}
+.top-btn.danger{background:rgba(255,80,80,0.28);}
+.top-btn.danger:hover{background:rgba(255,80,80,0.4);}
+.remain-box{display:flex;flex-direction:column;gap:4px;font-size:12px;}
+.remain-label{opacity:.85;font-weight:600;}
+.remain-badge{background:#fff;color:#0d4d92;padding:4px 10px;border-radius:14px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.2);}
+
+/* Main Menu */
+.main-menu{display:flex;gap:4px;margin:14px 0 10px 0;flex-wrap:wrap;}
+.main-menu{position:relative;align-items:center;}
+.user-inline{margin-inline-start:auto;background:rgba(0,0,0,0.08);padding:6px 14px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.55),0 3px 8px -3px rgba(0,0,0,0.25);backdrop-filter:blur(6px);} 
+.menu-item{position:relative;background:#e3e7ed;padding:10px 18px;border-radius:14px;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:6px 6px 12px #c2c6cc,-6px -6px 12px #ffffff;user-select:none;}
+.menu-item:focus,.menu-item:hover{background:#dbe1e7;}
+.menu-item.open{background:#d0dae2;}
+.submenu{position:absolute;top:100%;right:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);display:flex;flex-direction:column;gap:4px;padding:10px 10px;border-radius:16px;box-shadow:0 12px 30px -10px rgba(0,0,0,0.25);min-width:180px;margin-top:8px;z-index:30;visibility:hidden;opacity:0;transform:translateY(4px);transition:.18s;}
+.menu-item.open>.submenu{visibility:visible;opacity:1;transform:translateY(0);}
+.submenu-btn{background:#0d4d92;color:#fff;border:none;padding:8px 12px;border-radius:10px;text-align:right;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(13,77,146,0.35);}
+.submenu-btn:hover{background:#125ea8;}
+
+/* Hero Visual */
+/* (عودة) الشبكة والأيقونات الأصلية */
+.icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px;padding-bottom:30px;max-width:1120px;margin:0 auto;} 
+.icon-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 14px;border:none;border-radius:26px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-weight:700;font-size:15px;letter-spacing:.3px;box-shadow:6px 6px 16px rgba(0,0,0,0.18),-4px -4px 12px rgba(255,255,255,0.45),0 0 0 1px rgba(255,255,255,0.4) inset;background:linear-gradient(145deg,rgba(255,255,255,0.23),rgba(255,255,255,0.08));color:#102431;transition:.22s;min-height:140px;} 
+.icon-tile:hover{transform:translateY(-4px);box-shadow:10px 10px 28px rgba(0,0,0,0.28),-6px -6px 14px rgba(255,255,255,0.55);} 
+.icon-emoji{font-size:40px;margin-bottom:10px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.25));} 
+.icon-label{font-size:15px;font-weight:700;} 
+.icon-tile.color-green{--c1:#2ecc71;--c2:#27ae60;} 
+.icon-tile.color-blue{--c1:#3498db;--c2:#1d6fa5;} 
+.icon-tile.color-orange{--c1:#f39c12;--c2:#d35400;} 
+.icon-tile.color-purple{--c1:#9b59b6;--c2:#6d2f89;} 
+.icon-tile.color-teal{--c1:#1abc9c;--c2:#118c74;} 
+.icon-tile.color-pink{--c1:#ff5fa8;--c2:#d81b78;} 
+.icon-tile.color-indigo{--c1:#5468ff;--c2:#2436b8;} 
+.icon-tile.color-amber{--c1:#ffbf3c;--c2:#c97d00;} 
+.icon-tile.color-red{--c1:#ff4d4d;--c2:#c71f1f;} 
+.icon-tile.color-brown{--c1:#b07744;--c2:#6a4322;} 
+.icon-tile.color-slate{--c1:#64748b;--c2:#334155;} 
+.icon-tile.color-gray{--c1:#8e9aa5;--c2:#4b5563;} 
+.icon-tile.color-gray.dark-wide{grid-column:span 1;} 
+.icon-tile[class*='color-']{background:linear-gradient(160deg,var(--c1),var(--c2));color:#fff;} 
+.icon-tile[class*='color-'] .icon-emoji{filter:drop-shadow(0 6px 14px rgba(0,0,0,0.35));} 
+.view-area{flex:1;overflow:hidden;padding:4px 4px 40px 4px;position:relative;} 
+.brand-footer{position:absolute;bottom:10px;left:14px;right:14px;text-align:left;font-size:12.5px;font-weight:600;color:#000;text-shadow:none;pointer-events:none;}
+
+/* شبكة الأيقونات الجديدة */
+.icon-grid-wrapper{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:10px;}
+.app-icons-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:28px;max-width:1480px;margin:0 auto;padding:10px 10px 30px 10px;}
+.app-icon{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:20px 12px 28px 12px;cursor:pointer;text-align:center;user-select:none;}
+.app-icon:before{content:'';position:absolute;inset:0;border-radius:30px;background:linear-gradient(160deg,rgba(255,255,255,0.35),rgba(255,255,255,0.08));backdrop-filter:blur(12px) saturate(170%);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px -12px rgba(0,0,0,0.35),0 4px 14px -6px rgba(0,0,0,0.28),inset 0 0 0 1px rgba(255,255,255,0.5);transition:.3s;}
+.app-icon:hover:before{transform:translateY(-6px) scale(1.04);box-shadow:0 18px 38px -14px rgba(0,0,0,0.45),0 8px 20px -8px rgba(0,0,0,0.32),inset 0 0 0 1px rgba(255,255,255,0.6);} 
+.app-icon:active:before{transform:translateY(-2px) scale(.97);} 
+.app-emoji{position:relative;z-index:2;font-size:54px;line-height:1;filter:drop-shadow(0 10px 18px rgba(0,0,0,0.35));display:flex;align-items:center;justify-content:center;width:110px;height:110px;border-radius:34px;background:linear-gradient(145deg,rgba(255,255,255,0.75),rgba(255,255,255,0.18));box-shadow:0 8px 18px -6px rgba(0,0,0,0.4),inset 0 0 0 1px rgba(255,255,255,0.65);backdrop-filter:blur(10px);}
+.app-emoji:before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);width:68%;height:32%;border-radius:24px;background:linear-gradient(110deg,rgba(255,255,255,0.95),rgba(255,255,255,0.2));filter:blur(1px);opacity:.9;pointer-events:none;}
+.app-label{position:relative;z-index:2;font-size:15px;font-weight:700;color:#0d355d;letter-spacing:.3px;text-shadow:0 1px 2px rgba(255,255,255,0.6);} 
+
+/* تمت إزالة نمط wide-pos بعد التراجع عن توسيع بطاقة نقطة البيع */
+
+
+@media (max-width:1400px){.app-icons-grid{gap:26px;}}
+@media (max-width:1200px){.app-icons-grid{gap:22px;}}
+@media (max-width:1100px){.app-icons-grid{grid-template-columns:repeat(4,1fr);gap:24px;}}
+@media (max-width:900px){.app-icons-grid{grid-template-columns:repeat(3,1fr);gap:20px;}.app-emoji{width:90px;height:90px;font-size:46px;}}
+@media (max-width:600px){.app-icons-grid{grid-template-columns:repeat(2,1fr);gap:18px;}.app-emoji{width:80px;height:80px;font-size:42px;}.app-label{font-size:14px;}}
+
+
+@media (max-width:1400px){
+  .dash-grid-wrapper.six-cols{grid-template-columns:repeat(5,1fr);}  
+}
+@media (max-width:1150px){
+  .dash-grid-wrapper.six-cols{grid-template-columns:repeat(4,1fr);}  
+}
+@media (max-width:900px){
+	.dash-grid-wrapper{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;}
+	.dash-grid-wrapper.six-cols{grid-template-columns:repeat(3,1fr);} 
+	.stat-tile{min-height:140px;}
+	.stat-tile .tile-icon{width:54px;height:54px;}
+	.tile-emoji{font-size:30px;}
+	.dash-title{font-size:18px;}
+}
+@media (max-width:600px){
+	.dash-grid-wrapper{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;}
+	.dash-grid-wrapper.six-cols{grid-template-columns:repeat(2,1fr);} 
+	.stat-tile{min-height:130px;padding:12px 8px;}
+	.stat-tile .tile-icon{width:50px;height:50px;}
+	.tile-emoji{font-size:28px;}
+	.dash-title{font-size:17px;}
+}
+
+/* Responsive tweaks */
+@media (max-width:1100px){
+	.hero-title{font-size:32px;}
+	.icon-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+}
+@media (max-width:700px){
+	.top-bar{flex-wrap:wrap;gap:10px;}
+	.top-right{width:100%;justify-content:flex-end;}
+}
+
+/* Info box inside login */
+.info-box{background:linear-gradient(130deg,#f5f8fb,#e6edf3);border:1px solid #d6dde3;padding:10px 14px;border-radius:16px;font-size:12.5px;line-height:1.55;box-shadow:inset 2px 2px 4px rgba(0,0,0,0.04);} 
+.footer-mini{font-size:11.5px;opacity:.75;margin-top:34px;text-align:center;color:#123655;}
+/* Password wrapper & errors */
+.pwd-wrapper{position:relative;display:block;width:100%;height:var(--login-field-height);} 
+.pwd-wrapper .input{padding-inline-end:84px;width:100%;height:100%;line-height:1.15;box-sizing:border-box;}
+.toggle-pwd{position:absolute;left:8px;top:50%;transform:translateY(-50%);background:#0d4d92;color:#fff;border:none;font-size:12px;padding:6px 14px;border-radius:14px;cursor:pointer;box-shadow:0 4px 10px rgba(13,77,146,0.3);} 
+.toggle-pwd:active{transform:translateY(-50%) scale(.94);} 
+.form-error{margin-top:4px;color:#b00020;font-size:12.5px;font-weight:600;text-align:center;min-height:18px;}
+/* توحيد حجم خانات (المستخدم / كلمة السر) وتكبير أسماء الموظفين مع ضبطهما لنفس الارتفاع */
+/* تكبير وتوضيح القوائم والنص في خانات المستخدم وكلمة المرور */
+#usernameSelect,#password{height:var(--login-field-height);font-size:18px;line-height:1.25;font-weight:600;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+#usernameSelect{font-weight:700;}
+#usernameSelect option{font-size:20px;font-weight:700;padding:10px 8px;font-family:'Tajawal','Cairo','Tahoma','Noto Sans Arabic',sans-serif;}
+/* تمت إزالة تعريفات مكررة للـ pwd-wrapper بعد التوحيد أعلاه */

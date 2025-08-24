@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <!-- تعديل CSP للسماح بالسكريبت المضمّن الحالي -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" />
+  <title>إدارة الديون</title>
+  <style>
+    body { font-family: Tahoma, Arial, sans-serif; background:#f4f6f8; margin:0; padding:16px; color:#111; }
+    h1 { margin:0; font-size:22px; }
+    .top-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid #ddd; padding:6px 0 12px; }
+    button { cursor:pointer; border:1px solid #111; background:#fff; padding:6px 14px; font-family:inherit; border-radius:6px; font-size:14px; }
+    button:hover { background:#eee; }
+    input { border:1px solid #111; padding:6px 10px; border-radius:8px; font-family:inherit; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin:16px 0; }
+    .customers-panel { background:#fff; border:1px solid #111; border-radius:8px; padding:12px 14px; }
+    .list { max-height:300px; overflow:auto; margin-top:10px; border:1px solid #bbb; border-radius:8px; background:#fafafa; }
+    .item { padding:8px 10px; border-bottom:1px solid #e3e3e3; cursor:pointer; display:flex; flex-direction:column; gap:2px; }
+    .item:last-child { border-bottom:none; }
+    .item:hover { background:#f1f5f8; }
+    .item.selected { background:#d1ecf1; border-right:4px solid #0c5460; }
+    .item .name { font-weight:700; }
+    .item .phone { font-size:12px; opacity:.7; }
+    .status { margin-top:10px; font-size:12px; opacity:.8; }
+    .empty { padding:16px; text-align:center; font-size:13px; opacity:.6; }
+    /* Modal */
+    .modal { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:2000; }
+    .modal-box { background:#fff; padding:18px 20px; border-radius:10px; width:480px; max-width:94%; display:flex; flex-direction:column; gap:12px; }
+    .modal-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .adv-item { padding:6px 8px; border-bottom:1px solid #e3e3e3; cursor:pointer; }
+    .adv-item:hover { background:#f1f5f8; }
+    .adv-item.selected { background:#d1ecf1; border-right:4px solid #0c5460; }
+    /* Debts table */
+    .debts-table-container { max-height:400px; overflow-y:auto; border:1px solid #111; border-radius:4px; margin-top:20px; background:#fff; }
+    #debtsTable { width:100%; border-collapse:collapse; }
+    #debtsTable th,#debtsTable td { border:1px solid #111; padding:8px; text-align:center; }
+    #debtsTable th { background:#f0f0f0; position:sticky; top:0; }
+    #debtsTable tbody tr.selected { background:#e3f2fd; }
+    .debt-positive { color:#c11717; font-weight:700; }
+    .debt-negative { color:#0a7c1f; font-weight:700; }
+    .delete-btn { background:#e53935; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; }
+    /* Operation modal */
+    #operationModal .modal-content { background:#fff; padding:20px; border-radius:8px; width:400px; max-width:90%; }
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; margin-bottom:4px; font-weight:700; font-size:13px; }
+    .form-group input, .form-group select { width:100%; padding:8px; border:1px solid #111; border-radius:4px; }
+    .modal-buttons { display:flex; justify-content:flex-end; gap:10px; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>إدارة الديون</h1>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+  <button id="back-btn">⬅️ الرجوع إلى لوحة التحكم</button>
+      <button id="addTempCustomerBtn">➕ عميل مؤقت</button>
+  <button id="addDebtBtn" style="display:none;">➕ إضافة دين</button>
+    </div>
+  </div>
+  <div class="toolbar"></div>
+  <div class="toolbar" id="customerActions" style="display:none;">
+    <button id="btnOps">تعديل على الحركة</button>
+    <button id="btnEditCustomer">تعديل على العميل</button>
+    <button id="btnPartial">سداد جزئي</button>
+    <button id="btnReport">تقرير حسب التاريخ</button>
+  </div>
+  <section class="customers-panel">
+    <div style="font-weight:700;font-size:15px;">العملاء المؤقتون</div>
+    <div id="customerList" class="list"><div class="empty">لا توجد بيانات</div></div>
+    <div id="status" class="status"></div>
+  </section>
+
+  <!-- قسم عرض العمليات المباشر -->
+  <div id="inlineOperations" style="margin-top:25px; background:#fff; border:1px solid #111; border-radius:8px; padding:12px 14px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <h2 style="margin:0;font-size:17px;">العمليات (ديون + سداد)</h2>
+      <span id="opsCustomerLabel" style="font-size:13px;opacity:.7;"></span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;">
+      <thead>
+        <tr style="background:#f0f0f0;">
+          <th style="border:1px solid #ccc;padding:6px;">التاريخ</th>
+          <th style="border:1px solid #ccc;padding:6px;">المبلغ</th>
+          <th style="border:1px solid #ccc;padding:6px;">التفاصيل</th>
+          <th style="border:1px solid #ccc;padding:6px;">النوع</th>
+        </tr>
+      </thead>
+      <tbody id="inlineOpsBody"><tr><td colspan="4" style="padding:10px;opacity:.6;">اختر عميل لعرض العمليات</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- تم إزالة البحث المتقدم تبسيطاً -->
+
+  <!-- جدول الديون -->
+  <div class="debts-table-container">
+    <table id="debtsTable">
+      <thead>
+        <tr><th>اسم العميل</th><th>المتبقي</th><th>إجراءات</th></tr>
+      </thead>
+      <tbody id="debtsTableBody"><tr><td colspan="3" style="opacity:.6;">--</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- نافذة إضافة عميل مؤقت -->
+  <div class="modal" id="addCustomerModal">
+    <div class="modal-content" style="background:#fff; padding:20px; border-radius:8px; width:360px; max-width:95%; display:flex; flex-direction:column; gap:12px;">
+      <h2 style="margin:0;font-size:18px;">عميل مؤقت جديد</h2>
+      <div>
+        <label style="display:block;font-size:13px;margin-bottom:4px;">الاسم *</label>
+        <input type="text" id="tempName" />
+      </div>
+      <div>
+        <label style="display:block;font-size:13px;margin-bottom:4px;">الجوال</label>
+        <input type="text" id="tempPhone" />
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="cancelAdd">إلغاء</button>
+        <button id="saveAdd">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة إضافة دين -->
+  <div class="modal" id="addDebtModal">
+    <div class="modal-content" style="background:#fff; padding:20px; border-radius:8px; width:360px; max-width:95%; display:flex; flex-direction:column; gap:12px;">
+      <h2 style="margin:0;font-size:18px;">إضافة دين</h2>
+      <div>
+        <label style="display:block;font-size:13px;margin-bottom:4px;">المبلغ *</label>
+        <input type="number" id="debtAmount" min="0" step="0.01" />
+      </div>
+      <div>
+        <label style="display:block;font-size:13px;margin-bottom:4px;">التفاصيل</label>
+        <textarea id="debtDetails" style="width:100%;min-height:70px;resize:vertical;border:1px solid #111;border-radius:6px;padding:6px;font-family:inherit;"></textarea>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button id="cancelAddDebt">إلغاء</button>
+        <button id="saveAddDebt">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة العمليات (ديون + مدفوعات) -->
+  <div class="modal" id="operationsModal">
+    <div class="modal-box" style="max-width:750px;">
+      <h2 style="margin:0;font-size:18px;">العمليات</h2>
+      <div id="opsContainer" style="max-height:350px;overflow:auto;border:1px solid #ccc;border-radius:6px;background:#fff;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead style="background:#f0f0f0;">
+            <tr>
+              <th style="border:1px solid #ccc;padding:6px;">التاريخ</th>
+              <th style="border:1px solid #ccc;padding:6px;">النوع</th>
+              <th style="border:1px solid #ccc;padding:6px;">المبلغ</th>
+              <th style="border:1px solid #ccc;padding:6px;">المتبقي</th>
+              <th style="border:1px solid #ccc;padding:6px;">تفاصيل</th>
+              <th style="border:1px solid #ccc;padding:6px;">#</th>
+            </tr>
+          </thead>
+          <tbody id="opsBody"><tr><td colspan="6" style="padding:8px;opacity:.6;">--</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button id="closeOps">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تعديل دين -->
+  <div class="modal" id="editDebtModal">
+    <div class="modal-content" style="background:#fff; padding:20px; border-radius:8px; width:380px; max-width:95%; display:flex; flex-direction:column; gap:12px;">
+      <h2 style="margin:0;font-size:18px;">تعديل دين</h2>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">المبلغ *</label>
+        <input type="number" id="editDebtAmount" step="0.01" />
+      </div>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">التاريخ</label>
+        <input type="date" id="editDebtDate" />
+      </div>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">التفاصيل</label>
+        <textarea id="editDebtDetails" style="width:100%;min-height:60px;border:1px solid #111;border-radius:6px;padding:6px;font-family:inherit;"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button id="cancelEditDebt">إلغاء</button>
+        <button id="saveEditDebt">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تعديل عميل -->
+  <div class="modal" id="editCustomerModal">
+    <div class="modal-content" style="background:#fff; padding:20px; border-radius:8px; width:340px; max-width:95%; display:flex; flex-direction:column; gap:12px;">
+      <h2 style="margin:0;font-size:18px;">تعديل العميل</h2>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">الاسم *</label>
+        <input type="text" id="editCustomerName" />
+      </div>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">الجوال</label>
+        <input type="text" id="editCustomerPhone" />
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button id="cancelEditCustomer">إلغاء</button>
+        <button id="saveEditCustomer">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة سداد جزئي -->
+  <div class="modal" id="partialModal">
+    <div class="modal-content" style="background:#fff; padding:20px; border-radius:8px; width:360px; max-width:95%; display:flex; flex-direction:column; gap:12px;">
+      <h2 style="margin:0;font-size:18px;">سداد جزئي</h2>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">اختر الدين *</label>
+        <select id="partialDebtSelect" style="width:100%;padding:6px;border:1px solid #111;border-radius:6px;"></select>
+      </div>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">المبلغ *</label>
+        <input type="number" id="partialAmount" step="0.01" />
+      </div>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">التاريخ</label>
+        <input type="date" id="partialDate" />
+      </div>
+      <div>
+        <label style="font-size:13px;display:block;margin-bottom:4px;">التفاصيل</label>
+        <textarea id="partialDetails" style="width:100%;min-height:60px;border:1px solid #111;border-radius:6px;padding:6px;font-family:inherit;"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button id="cancelPartial">إلغاء</button>
+        <button id="savePartial">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تقرير تاريخ -->
+  <div class="modal" id="reportModal">
+    <div class="modal-box" style="max-width:760px;">
+      <h2 style="margin:0;font-size:18px;">تقرير حسب التاريخ</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+          <label style="font-size:13px;display:block;margin-bottom:4px;">من</label>
+          <input type="date" id="repFrom" />
+        </div>
+        <div>
+          <label style="font-size:13px;display:block;margin-bottom:4px;">إلى</label>
+          <input type="date" id="repTo" />
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button id="applyReport">تطبيق</button>
+          <button id="closeReport">إغلاق</button>
+        </div>
+      </div>
+      <div id="reportSummary" style="margin-top:10px;font-size:13px;font-weight:700;">--</div>
+      <div style="max-height:340px;overflow:auto;margin-top:10px;border:1px solid #ccc;border-radius:6px;background:#fff;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead style="background:#f0f0f0;">
+            <tr>
+              <th style="border:1px solid #ccc;padding:6px;">التاريخ</th>
+              <th style="border:1px solid #ccc;padding:6px;">النوع</th>
+              <th style="border:1px solid #ccc;padding:6px;">المبلغ</th>
+              <th style="border:1px solid #ccc;padding:6px;">متبقي</th>
+              <th style="border:1px solid #ccc;padding:6px;">تفاصيل</th>
+            </tr>
+          </thead>
+          <tbody id="reportBody"><tr><td colspan="5" style="padding:8px;opacity:.6;">--</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+        <button id="exportReportPdf">تصدير PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // نسخة مبسطة حسب المتطلبات: إضافة عميل مؤقت (اسم + جوال) فقط + عرض العملاء والديون
+  let selectedCustomer = null;
+  let customers = [];
+  let debts = [];
+  let operationsCache = []; // دمج ديون + مدفوعات للعميل المحدد
+  let editingDebtId = null;
+
+  const listEl = document.getElementById('customerList');
+  const statusEl = document.getElementById('status');
+  const addBtn = document.getElementById('addTempCustomerBtn');
+  const addDebtBtn = document.getElementById('addDebtBtn');
+  const backBtn = document.getElementById('back-btn');
+  const addModal = document.getElementById('addCustomerModal');
+  const saveAdd = document.getElementById('saveAdd');
+  const cancelAdd = document.getElementById('cancelAdd');
+  const addDebtModal = document.getElementById('addDebtModal');
+  const saveAddDebt = document.getElementById('saveAddDebt');
+  const cancelAddDebt = document.getElementById('cancelAddDebt');
+  // أزرار الإجراءات
+  const actionsBar = document.getElementById('customerActions');
+  const btnOps = document.getElementById('btnOps');
+  const btnEditCustomer = document.getElementById('btnEditCustomer');
+  const btnPartial = document.getElementById('btnPartial');
+  const btnReport = document.getElementById('btnReport');
+  // نوافذ جديدة
+  const operationsModal = document.getElementById('operationsModal');
+  const opsBody = document.getElementById('opsBody');
+  const closeOps = document.getElementById('closeOps');
+  const editDebtModal = document.getElementById('editDebtModal');
+  const editDebtAmount = document.getElementById('editDebtAmount');
+  const editDebtDate = document.getElementById('editDebtDate');
+  const editDebtDetails = document.getElementById('editDebtDetails');
+  const cancelEditDebt = document.getElementById('cancelEditDebt');
+  const saveEditDebt = document.getElementById('saveEditDebt');
+  const editCustomerModal = document.getElementById('editCustomerModal');
+  const editCustomerName = document.getElementById('editCustomerName');
+  const editCustomerPhone = document.getElementById('editCustomerPhone');
+  const cancelEditCustomer = document.getElementById('cancelEditCustomer');
+  const saveEditCustomer = document.getElementById('saveEditCustomer');
+  const partialModal = document.getElementById('partialModal');
+  const partialDebtSelect = document.getElementById('partialDebtSelect');
+  const partialAmount = document.getElementById('partialAmount');
+  const partialDate = document.getElementById('partialDate');
+  const partialDetails = document.getElementById('partialDetails');
+  const cancelPartial = document.getElementById('cancelPartial');
+  const savePartial = document.getElementById('savePartial');
+  const reportModal = document.getElementById('reportModal');
+  const repFrom = document.getElementById('repFrom');
+  const repTo = document.getElementById('repTo');
+  const applyReport = document.getElementById('applyReport');
+  const closeReport = document.getElementById('closeReport');
+  const reportBody = document.getElementById('reportBody');
+  const reportSummary = document.getElementById('reportSummary');
+  const exportReportPdf = document.getElementById('exportReportPdf');
+  // عناصر العمليات المضمنة
+  const inlineOpsBody = document.getElementById('inlineOpsBody');
+  const opsCustomerLabel = document.getElementById('opsCustomerLabel');
+
+  function setStatus(msg, isError=false){
+    if(!statusEl) return; statusEl.textContent = msg||''; statusEl.style.color = isError? '#b71c1c':'#111';
+  }
+
+  async function callApi(label, fn, args = [], fallback){
+    if(typeof fn !== 'function'){ console.warn('API missing', label); return fallback; }
+    try { return await fn(...args); } catch(e){ console.error(e); return fallback; }
+  }
+
+  function renderCustomers(){
+    if(!customers.length){ listEl.innerHTML = '<div class="empty">لا توجد بيانات</div>'; return; }
+    listEl.innerHTML = customers.map(c=>`<div class="item ${selectedCustomer&&selectedCustomer.id===c.id?'selected':''}" data-id="${c.id}">
+      <div class="name">${c.name||'بدون اسم'}</div><div class="phone">${c.phone||''}</div>
+    </div>`).join('');
+  // إظهار/إخفاء زر إضافة دين حسب التحديد
+  addDebtBtn.style.display = selectedCustomer ? 'inline-block' : 'none';
+  actionsBar.style.display = selectedCustomer ? 'flex' : 'none';
+  }
+
+  async function loadCustomers(){
+    setStatus('جاري التحميل...');
+    const res = await callApi('debtCustomersList', window.api?.debtCustomersList, [], []);
+    customers = (res && res.rows) ? res.rows : (Array.isArray(res)? res: []);
+    setStatus(`إجمالي العملاء: ${customers.length}`);
+    renderCustomers();
+  }
+
+  async function loadDebts(){
+    const tbody = document.getElementById('debtsTableBody');
+    if(!tbody) return;
+    tbody.innerHTML='<tr><td colspan="3">جاري التحميل...</td></tr>';
+    const res = await callApi('debtsList', window.api?.debtsList, [], { ok:true, rows:[] });
+    debts = res && res.ok ? (res.rows||[]) : [];
+    if(!debts.length){ tbody.innerHTML='<tr><td colspan="3" style="opacity:.6;">لا توجد ديون</td></tr>'; return; }
+    tbody.innerHTML = debts.map(d=>{
+      const amount = d.amount||0; const paid = d.paid_amount||0; const remain = amount - paid;
+      return `<tr><td>${d.customer_name||''}</td><td class='${remain>0?'debt-positive':'debt-negative'}'>${remain.toFixed(2)}</td><td><button class='delete-btn' data-id='${d.id}'>حذف</button></td></tr>`;
+    }).join('');
+  }
+
+  listEl.addEventListener('click', e=>{
+    const it = e.target.closest('.item'); if(!it) return; const id = +it.dataset.id;
+  selectedCustomer = customers.find(c=>c.id===id)||null; renderCustomers();
+  loadInlineOperations();
+  });
+
+  // زر الرجوع
+  if(backBtn){ backBtn.addEventListener('click', ()=>{ window.location.href='dashboard.html'; }); }
+
+  // تحميل العمليات المضمنة (ديون + مدفوعات)
+  async function loadInlineOperations(){
+    if(!selectedCustomer){
+      inlineOpsBody.innerHTML = '<tr><td colspan="4" style="padding:10px;opacity:.6;">اختر عميل لعرض العمليات</td></tr>'.replace('inlineOpsBody','inlineOpsBody');
+      opsCustomerLabel.textContent='';
+      return;
+    }
+    opsCustomerLabel.textContent = 'للعميل: '+ (selectedCustomer.name || '');
+    inlineOpsBody.innerHTML = '<tr><td colspan="4" style="padding:10px;">جاري التحميل...</td></tr>';
+    const resp = await callApi('debtOperations', window.api?.debtOperations, [selectedCustomer.id], { operations:[] });
+    const ops = (resp && resp.operations) ? resp.operations : [];
+    if(!ops.length){ inlineOpsBody.innerHTML = '<tr><td colspan="4" style="padding:10px;opacity:.6;">لا توجد عمليات</td></tr>'; return; }
+    inlineOpsBody.innerHTML = ops.map(o=>{
+      const date = (o.date||'').slice(0,10);
+      const typeLabel = o.type==='debt'? 'دين' : 'سداد';
+      return `<tr>
+        <td style='border:1px solid #ccc;padding:4px;'>${date}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${(o.amount||0).toFixed(2)}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${o.details||''}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${typeLabel}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ==== العمليات (عرض + تحرير) ====
+  async function loadOperations(){
+    if(!selectedCustomer) return;
+    opsBody.innerHTML = '<tr><td colspan="6" style="padding:8px;">جاري التحميل...</td></tr>';
+    const resp = await callApi('debtOperations', window.api?.debtOperations, [selectedCustomer.id], { ok:false });
+    if(!resp || resp.error){ opsBody.innerHTML='<tr><td colspan="6" style="padding:8px;color:#b71c1c;">فشل الجلب</td></tr>'; return; }
+    operationsCache = resp.operations||[];
+    if(!operationsCache.length){ opsBody.innerHTML='<tr><td colspan="6" style="padding:8px;opacity:.6;">لا توجد عمليات</td></tr>'; return; }
+    opsBody.innerHTML = operationsCache.map(op=>{
+      const isDebt = op.type==='debt';
+      const remain = op.remain!=null? op.remain : (isDebt? (op.amount - (op.paid_amount||0)) : '');
+      return `<tr data-type='${op.type}' data-id='${op.id}'>
+        <td style='border:1px solid #ccc;padding:4px;'>${(op.date||'').slice(0,10)}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${op.type==='debt'?'دين':'سداد'}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${(op.amount||0).toFixed(2)}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${remain!==''? remain.toFixed? remain.toFixed(2):remain:''}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${op.details||''}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${isDebt?'<button class="mini-edit" data-edit="'+op.id+'">تعديل</button>':''}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  btnOps.addEventListener('click', ()=>{ if(!selectedCustomer){ alert('اختر عميل'); return; } operationsModal.style.display='flex'; loadOperations(); });
+  closeOps.addEventListener('click', ()=> operationsModal.style.display='none');
+  operationsModal.addEventListener('click', e=>{ if(e.target===operationsModal) operationsModal.style.display='none'; });
+  opsBody.addEventListener('click', e=>{
+    const btn = e.target.closest('button[data-edit]'); if(!btn) return; const id = +btn.dataset.edit; const row = operationsCache.find(r=> r.id===id && r.type==='debt'); if(!row) return;
+    editingDebtId = id;
+    editDebtAmount.value = row.amount||0;
+    editDebtDate.value = (row.date||'').slice(0,10);
+    editDebtDetails.value = row.details||'';
+    editDebtModal.style.display='flex';
+  });
+  cancelEditDebt.addEventListener('click', ()=>{ editDebtModal.style.display='none'; });
+  editDebtModal.addEventListener('click', e=>{ if(e.target===editDebtModal) editDebtModal.style.display='none'; });
+  saveEditDebt.addEventListener('click', async ()=>{
+    if(!editingDebtId){ alert('لا يوجد معرف'); return; }
+    const amount = parseFloat(editDebtAmount.value); if(isNaN(amount)||amount<=0){ alert('مبلغ غير صالح'); return; }
+    const details = editDebtDetails.value.trim();
+    const date = editDebtDate.value? (editDebtDate.value)+'T00:00:00' : undefined;
+    const r = await callApi('debtUpdate', window.api?.debtUpdate, [editingDebtId, { amount, details, date }], { ok:false });
+    if(!r || r.ok===false){ alert(r?.msg||'فشل التحديث'); return; }
+    alert('تم التحديث');
+    editDebtModal.style.display='none';
+    loadDebts(); loadOperations();
+  });
+
+  // ==== تعديل عميل ====
+  btnEditCustomer.addEventListener('click', ()=>{
+    if(!selectedCustomer){ alert('اختر عميل'); return; }
+    editCustomerName.value = selectedCustomer.name||'';
+    editCustomerPhone.value = selectedCustomer.phone||'';
+    editCustomerModal.style.display='flex';
+  });
+  cancelEditCustomer.addEventListener('click', ()=> editCustomerModal.style.display='none');
+  editCustomerModal.addEventListener('click', e=>{ if(e.target===editCustomerModal) editCustomerModal.style.display='none'; });
+  saveEditCustomer.addEventListener('click', async ()=>{
+    if(!selectedCustomer) return;
+    const name = editCustomerName.value.trim(); if(!name){ alert('الاسم مطلوب'); return; }
+    const phone = editCustomerPhone.value.trim();
+    const r = await callApi('debtCustomerUpdate', window.api?.debtCustomerUpdate, [selectedCustomer.id, { name, phone }], { ok:false });
+    if(!r || r.ok===false){ alert(r?.msg||'فشل التحديث'); return; }
+    alert('تم تحديث العميل');
+    editCustomerModal.style.display='none';
+    await loadCustomers();
+    // إعادة تعيين المحدد بنفس المعرف
+    selectedCustomer = customers.find(c=> c.id===r.id) || selectedCustomer;
+    renderCustomers();
+    loadDebts();
+  });
+
+  // ==== سداد جزئي ====
+  function fillPartialSelect(){
+    partialDebtSelect.innerHTML = debts.filter(d=> (d.amount||0) > (d.paid_amount||0)).map(d=>{
+      const remain = (d.amount||0) - (d.paid_amount||0);
+      return `<option value='${d.id}'>دين #${d.id} | متبق: ${remain.toFixed(2)}</option>`;
+    }).join('');
+  }
+  btnPartial.addEventListener('click', ()=>{
+    if(!selectedCustomer){ alert('اختر عميل'); return; }
+    fillPartialSelect();
+    if(!partialDebtSelect.innerHTML){ alert('لا توجد ديون قابلة للسداد'); return; }
+    partialAmount.value=''; partialDetails.value='';
+    partialDate.value = new Date().toISOString().slice(0,10);
+    partialModal.style.display='flex';
+  });
+  cancelPartial.addEventListener('click', ()=> partialModal.style.display='none');
+  partialModal.addEventListener('click', e=>{ if(e.target===partialModal) partialModal.style.display='none'; });
+  savePartial.addEventListener('click', async ()=>{
+    const debt_id = parseInt(partialDebtSelect.value,10); if(!debt_id){ alert('اختر دين'); return; }
+    const amount = parseFloat(partialAmount.value); if(isNaN(amount)||amount<=0){ alert('مبلغ غير صالح'); return; }
+    const details = partialDetails.value.trim();
+    const date = partialDate.value? partialDate.value+'T00:00:00' : new Date().toISOString();
+    const r = await callApi('debtPaymentAdd', window.api?.debtPaymentAdd, [{ debt_id, amount, details, date }], { ok:false });
+    if(!r || r.ok===false){ alert(r?.msg||'فشل السداد'); return; }
+    alert('تم تسجيل السداد');
+    partialModal.style.display='none';
+    loadDebts(); if(operationsModal.style.display==='flex') loadOperations();
+  });
+
+  // ==== تقرير حسب التاريخ ====
+  btnReport.addEventListener('click', ()=>{ if(!selectedCustomer){ alert('اختر عميل'); return; } repFrom.value=''; repTo.value=''; reportBody.innerHTML='<tr><td colspan="5" style="padding:8px;opacity:.6;">--</td></tr>'; reportSummary.textContent='--'; reportModal.style.display='flex'; });
+  closeReport.addEventListener('click', ()=> reportModal.style.display='none');
+  reportModal.addEventListener('click', e=>{ if(e.target===reportModal) reportModal.style.display='none'; });
+  applyReport.addEventListener('click', async ()=>{
+    if(!selectedCustomer) return;
+    reportBody.innerHTML='<tr><td colspan="5" style="padding:8px;">جاري...</td></tr>';
+    const payload = { customer_id: selectedCustomer.id, from: repFrom.value||undefined, to: repTo.value||undefined };
+    const r = await callApi('debtReportRange', window.api?.debtReportRange, [payload], { ok:false });
+    if(!r || r.error){ reportBody.innerHTML='<tr><td colspan="5" style="padding:8px;color:#b71c1c;">فشل</td></tr>'; return; }
+    const debtsRows = r.debts||[]; const pays = r.payments||[];
+    const ops = debtsRows.map(d=>({ date:d.date, type:'دين', amount:d.amount, remain:(d.amount-d.paid_amount), details:d.details||'' }))
+      .concat(pays.map(p=>({ date:p.date, type:'سداد', amount:p.amount, remain:'', details:p.details||'' })))
+      .sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    if(!ops.length){ reportBody.innerHTML='<tr><td colspan="5" style="padding:8px;opacity:.6;">لا نتائج</td></tr>'; }
+    else {
+      reportBody.innerHTML = ops.map(o=> `<tr>
+        <td style='border:1px solid #ccc;padding:4px;'>${(o.date||'').slice(0,10)}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${o.type}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${(o.amount||0).toFixed(2)}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${o.remain!=='' && o.remain!=null ? (o.remain.toFixed? o.remain.toFixed(2):o.remain):''}</td>
+        <td style='border:1px solid #ccc;padding:4px;'>${o.details||''}</td>
+      </tr>`).join('');
+    }
+    reportSummary.textContent = `إجمالي الديون: ${(r.totalDebts||0).toFixed(2)} | إجمالي السداد: ${(r.totalPays||0).toFixed(2)} | الرصيد: ${(r.balance||0).toFixed(2)}`;
+  });
+  exportReportPdf.addEventListener('click', ()=>{ alert('لم يتم تنفيذ تصدير PDF بعد'); });
+
+  // ==== إغلاق بـ ESC لكل النوافذ ====
+  function closeAllModals(){
+    [addModal, addDebtModal, operationsModal, editDebtModal, editCustomerModal, partialModal, reportModal].forEach(m=>{ if(m && m.style.display==='flex') m.style.display='none'; });
+  }
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAllModals(); } });
+
+  addBtn.addEventListener('click', ()=>{
+    addModal.style.display='flex';
+    document.getElementById('tempName').value='';
+    document.getElementById('tempPhone').value='';
+  });
+
+  addDebtBtn.addEventListener('click', ()=>{
+    if(!selectedCustomer){ alert('اختر عميل أولاً'); return; }
+    addDebtModal.style.display='flex';
+    document.getElementById('debtAmount').value='';
+    document.getElementById('debtDetails').value='';
+  });
+
+  cancelAdd.addEventListener('click', ()=>{ addModal.style.display='none'; });
+  addModal.addEventListener('click', e=>{ if(e.target===addModal) addModal.style.display='none'; });
+  addDebtModal.addEventListener('click', e=>{ if(e.target===addDebtModal) addDebtModal.style.display='none'; });
+
+  saveAdd.addEventListener('click', async ()=>{
+    const name = document.getElementById('tempName').value.trim();
+    const phone = document.getElementById('tempPhone').value.trim();
+    if(!name){ alert('الاسم مطلوب'); return; }
+    const r = await callApi('debtCustomerAdd', window.api?.debtCustomerAdd, [{ name, phone }], { ok:false });
+    if(r && r.ok){ addModal.style.display='none'; await loadCustomers(); } else { alert(r?.error || 'فشل الإضافة'); }
+  });
+
+  saveAddDebt.addEventListener('click', async ()=>{
+    if(!selectedCustomer){ alert('لا يوجد عميل محدد'); return; }
+    const amountRaw = document.getElementById('debtAmount').value.trim();
+    const details = document.getElementById('debtDetails').value.trim();
+    const amount = parseFloat(amountRaw);
+    if(isNaN(amount) || amount <= 0){ alert('أدخل مبلغاً صحيحاً أكبر من صفر'); return; }
+    const resp = await callApi('debtAdd', window.api?.debtAdd, [{
+      customer_id: selectedCustomer.id,
+      customer_name: selectedCustomer.name,
+      amount: amount,
+      details,
+      date: new Date().toISOString()
+    }], { ok:false });
+    if(resp && resp.ok){
+      alert('تم إضافة الدين بنجاح');
+      document.getElementById('debtAmount').value='';
+      document.getElementById('debtDetails').value='';
+      addDebtModal.style.display='none';
+      await loadDebts();
+    } else {
+      alert(resp?.error || 'فشل إضافة الدين');
+    }
+  });
+
+  cancelAddDebt.addEventListener('click', ()=>{ addDebtModal.style.display='none'; });
+
+  document.getElementById('debtsTableBody').addEventListener('click', async e=>{
+    const btn = e.target.closest('.delete-btn'); if(!btn) return;
+    const id = +btn.dataset.id; if(!confirm('حذف الدين؟')) return;
+    await callApi('debtDelete', window.api?.debtDelete, [id], { ok:false });
+    loadDebts();
+  });
+
+  window.addEventListener('DOMContentLoaded', ()=>{ loadCustomers(); loadDebts(); });
+  </script>
+</body>
+</html>

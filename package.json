@@ -1,0 +1,57 @@
+{
+  "name": "asas-pos",
+  "productName": "Asas",
+  "version": "0.1.0",
+  "description": "تطبيق نقطة بيع عربي (RTL) محمول Asas - Phase 1",
+  "author": "",
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "prepare:icon": "node scripts/gen-icon.js",
+    "dist": "npm run prepare:icon && electron-builder --win portable --x64 --ia32",
+    "dist:zip": "npm run prepare:icon && electron-builder --win zip --x64 --ia32"
+  },
+  "build": {
+    "appId": "com.asas.soft.pos",
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "Asas-${version}-${arch}.exe"
+    }
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dayjs": "1.11.11",
+    "electron-store": "8.1.0",
+    "exceljs": "^4.4.0",
+    "pdfkit": "^0.13.0",
+    "qrcode": "^1.5.3",
+    "sql.js": "1.9.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "electron": "^37.3.1",
+    "electron-builder": "24.13.3"
+  }
+}

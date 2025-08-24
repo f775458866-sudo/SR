@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>إدارة المخازن</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+    body{margin:0;background:#fff;color:#000;font-size:14px;}
+    header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:2px solid #fff;background:#000;color:#fff;}
+    header h1{margin:0;font-size:20px;font-weight:700;}
+    .spacer{flex:1;}
+    button{font-family:inherit;cursor:pointer;border:2px solid #fff;background:#000;color:#fff;padding:6px 14px;font-size:13px;font-weight:700;border-radius:4px;}
+    button:hover{background:#111;}
+    #searchBar{padding:8px 14px;border-bottom:2px solid #000;display:flex;gap:8px;background:#f5f5f5;}
+    #searchBar input{flex:1;padding:8px 10px;border:2px solid #000;border-radius:4px;font-size:13px;}
+    table{width:100%;border-collapse:collapse;margin:0;}
+    th,td{border:2px solid #000;padding:6px 8px;text-align:center;font-size:13px;}
+    th{background:#eee;}
+    tbody tr:nth-child(even){background:#fafafa;}
+    tbody tr:hover{background:#e6e6e6;}
+    .btn-inline{padding:4px 10px;font-size:12px;margin:0 2px;}
+    /* Modal */
+    #storeModal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;}
+    #storeModal .modal{background:#fff;border:2px solid #000;padding:16px 20px;width:420px;max-width:95%;}
+    #storeModal h2{margin:0 0 10px;font-size:18px;}
+    form#storeForm{display:flex;flex-direction:column;gap:10px;}
+    form#storeForm label{font-size:12px;font-weight:700;}
+    form#storeForm input, form#storeForm textarea{border:2px solid #000;padding:6px 8px;border-radius:4px;font-size:13px;font-family:inherit;}
+    form#storeForm textarea{min-height:70px;resize:vertical;}
+    .error{border-color:#d50000 !important;background:#ffecec;}
+    .modal-actions{display:flex;gap:8px;justify-content:center;margin-top:4px;}
+    .export-menu{display:none;}
+    #tableContainer{padding:10px 14px;}
+  </style>
+</head>
+<body>
+  <header>
+    <button id="backBtn">رجوع</button>
+    <h1>إدارة المخازن</h1>
+    <div class="spacer"></div>
+  <button id="btnTransfer" style="margin-left:8px;">التحويل بين المخازن</button>
+    <button id="btnAdd">إضافة مخزن جديد</button>
+  </header>
+  <div id="searchBar">
+    <input id="searchInput" type="text" placeholder="بحث في المخازن (اسم / موقع / مسئول / هاتف)">
+  </div>
+  <div id="tableContainer">
+    <table id="storesTable">
+      <thead>
+        <tr>
+          <th>اسم المخزن</th>
+          <th>الموقع</th>
+          <th>المسؤول</th>
+          <th>الهاتف</th>
+          <th>تقييمات</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="storeModal">
+    <div class="modal">
+      <h2 id="modalTitle">إضافة مخزن</h2>
+      <form id="storeForm" onsubmit="return false;">
+        <div><label>اسم المخزن <span style="color:#d00;">*</span></label><input type="text" id="storeName" data-required="1" /></div>
+        <div><label>الموقع <span style="color:#d00;">*</span></label><input type="text" id="storeLocation" data-required="1" /></div>
+        <div class="adv-fields" style="display:none;">
+          <div><label>المسؤول عن المخزن</label><input type="text" id="storeManager" /></div>
+          <div><label>رقم الهاتف</label><input type="text" id="storePhone" /></div>
+          <div><label>تقييم (0-5)</label><input type="number" min="0" max="5" step="0.1" id="storeRating" /></div>
+          <div><label>ملاحظات</label><textarea id="storeNotes"></textarea></div>
+        </div>
+      </form>
+      <div class="modal-actions">
+        <button id="saveStore">حفظ</button>
+        <button id="cancelStore">إلغاء</button>
+      </div>
+      <div id="storeMsg" style="text-align:center;font-size:12px;font-weight:700;margin-top:6px;min-height:18px;"></div>
+    </div>
+  </div>
+
+  <!-- نموذج التحويل بين المخازن -->
+  <div id="transferModal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);">
+    <div style="background:#fff;border:2px solid #000;padding:16px 20px;width:480px;max-width:95%;">
+      <h2 style="margin:0 0 12px;font-size:18px;">النقل بين المخازن</h2>
+      <form id="transferForm" onsubmit="return false;" style="display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;">من المخزن
+          <select id="trFrom" style="border:2px solid #000;padding:6px 8px;font-size:13px;border-radius:4px;"></select>
+        </label>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;">إلى المخزن
+          <select id="trTo" style="border:2px solid #000;padding:6px 8px;font-size:13px;border-radius:4px;"></select>
+        </label>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;">المنتج
+          <select id="trProduct" style="border:2px solid #000;padding:6px 8px;font-size:13px;border-radius:4px;"></select>
+        </label>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;">الكمية
+          <input type="number" id="trQty" min="1" style="border:2px solid #000;padding:6px 8px;font-size:13px;border-radius:4px;" />
+        </label>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;">ملاحظة (اختياري)
+          <textarea id="trNote" style="border:2px solid #000;padding:6px 8px;font-size:13px;border-radius:4px;min-height:60px;resize:vertical;"></textarea>
+        </label>
+      </form>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;">
+        <button id="trSave" style="background:#000;color:#fff;border:2px solid #fff;">حفظ</button>
+        <button id="trCancel" style="background:#000;color:#fff;border:2px solid #fff;">إلغاء</button>
+      </div>
+      <div id="trMsg" style="text-align:center;font-size:12px;font-weight:700;margin-top:8px;color:#b50000;min-height:16px;"></div>
+    </div>
+  </div>
+
+  <script src="navigation.js"></script>
+  <script src="warehouses.js"></script>
+</body>
+</html>

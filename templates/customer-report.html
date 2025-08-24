@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>تقرير عميل</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  body { font-family: 'Cairo','Tahoma',sans-serif; direction: rtl; margin:0; padding:0; color:#111; }
+  .container { max-width:100%; }
+  h1,h2,h3 { margin:4px 0; font-weight:700; }
+  header { text-align:center; margin-bottom:12px; }
+  .meta { font-size:12px; text-align:right; line-height:1.4; margin-bottom:10px; }
+  table { width:100%; border-collapse:collapse; font-size:11px; }
+  th,td { border:1px solid #444; padding:4px 6px; }
+  th { background:#f0f0f0; }
+  tbody tr:nth-child(even){ background:#fafafa; }
+  .totals { margin-top:10px; font-size:12px; font-weight:600; }
+  .range { font-size:11px; color:#333; margin-top:4px; }
+  .footer { position:fixed; bottom:5mm; left:0; right:0; text-align:center; font-size:10px; color:#555; }
+  .badge { display:inline-block; background:#222; color:#fff; padding:2px 6px; border-radius:6px; font-size:10px; margin-left:4px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 id="custName">اسم العميل</h1>
+      <h3>تقرير عميل</h3>
+    </header>
+    <div class="meta" id="metaBox"></div>
+    <div class="range" id="rangeBox"></div>
+    <div class="totals" id="totalsBox"></div>
+    <table id="salesTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>رقم الفاتورة</th>
+          <th>الصافي</th>
+          <th>الضريبة</th>
+          <th>الخصم</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="footer">تم التوليد بواسطة النظام - <span id="genTime"></span></div>
+<script>
+(function(){
+  function qs(name){ const p=new URLSearchParams(location.search); return p.get(name); }
+  async function load(){
+    const cid = qs('customer_id');
+    const start = qs('start');
+    const end = qs('end');
+    if(!cid){ document.body.innerHTML='<h2>لا يوجد معرف عميل</h2>'; return; }
+    const r = await window.api.customerReport({ customer_id: parseInt(cid), start, end });
+    if(!r.ok){ document.body.innerHTML='<h2>فشل: '+(r.msg||'خطأ')+'</h2>'; return; }
+    const d=r.data;
+    document.getElementById('custName').textContent = d.customer.name + ' #' + d.customer.id;
+    document.getElementById('genTime').textContent = new Date().toLocaleString('ar-SA');
+    document.getElementById('metaBox').innerHTML = 'هاتف: '+(d.customer.phone||'-') + ' | رصيد: ' + d.customer.balance + ' <span class="badge">فواتير: '+d.salesCount+'</span>';
+    document.getElementById('rangeBox').textContent = 'الفترة: ' + (start||'من البداية') + ' → ' + (end||'حتى الآن');
+    document.getElementById('totalsBox').textContent = 'إجمالي: '+d.totalSales.toFixed(2)+' | ضريبة: '+d.totalVat.toFixed(2)+' | خصم: '+d.totalDiscount.toFixed(2);
+    const tb = document.querySelector('#salesTable tbody');
+    tb.innerHTML = d.recentSales.map(s=>`<tr><td>${s.id}</td><td>${s.invoice_no||''}</td><td>${(s.total||0).toFixed(2)}</td><td>${(s.vat||0).toFixed(2)}</td><td>${(s.discount||0).toFixed(2)}</td><td>${(s.created_at||'').replace('T',' ').slice(0,16)}</td></tr>`).join('');
+  }
+  load();
+})();
+</script>
+</body>
+</html>

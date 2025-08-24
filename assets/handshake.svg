@@ -1,0 +1,44 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="bgG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d4d92"/>
+      <stop offset="50%" stop-color="#2a6faf"/>
+      <stop offset="100%" stop-color="#3d97e8"/>
+    </linearGradient>
+    <linearGradient id="cardG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.04"/>
+    </linearGradient>
+    <clipPath id="clipCloud">
+      <path d="M140 90c0-39.765 32.235-72 72-72 28.334 0 52.827 16.63 64.044 40.678A63.962 63.962 0 0 1 316 50c35.346 0 64 28.654 64 64 0 1.64-.064 3.267-.19 4.879C399.082 120.73 416 142.27 416 168c0 35.346-28.654 64-64 64H164c-39.765 0-72-32.235-72-72 0-34.02 24.187-62.402 56.133-69.41A71.84 71.84 0 0 1 140 90Z" />
+    </clipPath>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgG)"/>
+  <g opacity="0.22" stroke="#fff" stroke-width="1.2">
+    <circle cx="120" cy="140" r="38"/>
+    <circle cx="220" cy="90" r="22"/>
+    <circle cx="300" cy="180" r="28"/>
+    <circle cx="420" cy="120" r="46"/>
+    <circle cx="560" cy="200" r="60"/>
+    <circle cx="640" cy="120" r="30"/>
+    <circle cx="700" cy="220" r="26"/>
+  </g>
+  <g stroke="#ffffff55" stroke-width="1">
+    <path d="M80 420c40-40 80-40 120 0s80 40 120 0 80-40 120 0 80 40 120 0 80-40 120 0" fill="none"/>
+  </g>
+  <g transform="translate(180 300)">
+    <rect x="-40" y="-40" width="300" height="160" rx="26" fill="#ffffff10" stroke="#ffffff55" stroke-width="1.2" />
+    <text x="110" y="20" font-size="48" font-weight="700" text-anchor="middle" fill="#ffffff">Asas</text>
+    <text x="110" y="54" font-size="14" text-anchor="middle" fill="#ffffffcc">نظامك المحاسبي المتكامل</text>
+  </g>
+  <g clip-path="url(#clipCloud)" transform="translate(300 40) scale(0.9)">
+    <rect x="120" y="40" width="320" height="180" fill="#ffffff08" />
+    <g stroke="#fff" stroke-width="1" opacity="0.6">
+      <path d="M140 90h180M140 120h140M140 150h200M140 180h160"/>
+    </g>
+  </g>
+  <g fill="#fff" opacity="0.8">
+    <path d="M480 360c18 0 28 10 36 22l30-26c6-6 14-6 20 0s6 14 0 20l-46 44c-3 3-8 6-14 6h-6c-10 0-20-4-26-12l-22-26c-2-2-2-6 0-8l8-8c2-2 6-2 8 0l12 14c6 8 12 10 20 10 4 0 8-2 10-4l-24-32c-6-8-2-20 10-20Z" />
+    <path d="M410 352c6-6 14-6 20 0l22 22c2 2 2 6 0 8l-8 8c-2 2-6 2-8 0l-22-22c-6-6-6-14 0-20Z" />
+  </g>
+</svg>

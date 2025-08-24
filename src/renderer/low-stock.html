@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>المنتجات منخفضة المخزون</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+    body{margin:0;background:#fff;color:#000;font-size:14px;}
+    header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:2px solid #fff;background:#000;color:#fff;}
+    header h1{margin:0;font-size:20px;font-weight:700;}
+    .spacer{flex:1;}
+    button,select{font-family:inherit;cursor:pointer;border:2px solid #fff;background:#000;color:#fff;padding:6px 12px;font-size:13px;font-weight:700;border-radius:4px;}
+    button:hover,select:hover{background:#111;}
+    select{min-width:180px;}
+    #controls{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:2px solid #000;background:#f5f5f5;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{border:2px solid #000;padding:6px 8px;text-align:center;font-size:13px;}
+    th{background:#eee;}
+    tbody tr:nth-child(even){background:#fafafa;}
+    tbody tr:hover{background:#e6e6e6;}
+    .status-low{background:#fff8d1;}
+    .status-critical{background:#ffe0e0;}
+    .inline-flex{display:flex;gap:6px;align-items:center;}
+    .badge{display:inline-block;padding:2px 8px;border:2px solid #000;border-radius:14px;font-size:11px;font-weight:700;}
+    .badge.low{background:#fff8d1;}
+    .badge.critical{background:#ffdbdb;}
+  </style>
+</head>
+<body>
+  <header>
+    <button id="backBtn">رجوع</button>
+    <h1>المنتجات منخفضة المخزون</h1>
+    <div class="spacer"></div>
+    <button id="refreshBtn">تحديث ↻</button>
+  </header>
+  <div id="controls">
+    <label style="font-weight:700;">اختر المخزن:
+      <select id="storeFilter">
+        <option value="">الكل</option>
+      </select>
+    </label>
+    <span id="countInfo" style="font-size:12px;font-weight:700;color:#333;">-</span>
+  </div>
+  <div style="padding:10px 14px;">
+    <table id="lowTable">
+      <thead>
+        <tr>
+          <th>اسم المنتج</th>
+          <th>الكمية الحالية</th>
+          <th>حد الطلب</th>
+          <th>المخزن</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="navigation.js"></script>
+  <script>
+    const tbody = document.querySelector('#lowTable tbody');
+    const storeSel = document.getElementById('storeFilter');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const backBtn = document.getElementById('backBtn');
+    const countInfo = document.getElementById('countInfo');
+    let cache = [];
+
+    async function loadStores(){
+      try {
+        const r = await (window.api.listStores? window.api.listStores('') : window.api.storesAdvList(''));
+        if(r && r.ok){
+          storeSel.innerHTML = '<option value="">الكل</option>' + (r.rows||r.data||[]).map(s=>`<option value="${s.id}">${escapeHtml(s.name||'')}</option>`).join('');
+        }
+      } catch{}
+    }
+
+    function escapeHtml(str){ return (str||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+    async function loadLow(){
+      const storeId = storeSel.value ? parseInt(storeSel.value) : null;
+      const r = await window.api.lowStockList(storeId||null);
+      if(r && r.ok){
+        // backend يعيد فقط المنتجات منخفضة المخزون
+        cache = r.rows || [];
+        render();
+      }
+    }
+
+    function render(){
+      tbody.innerHTML='';
+      if(!cache.length){
+        const tr=document.createElement('tr');
+        const td=document.createElement('td'); td.colSpan=5; td.textContent='لا توجد منتجات منخفضة';
+        tr.appendChild(td); tbody.appendChild(tr); countInfo.textContent='0 منتج'; return;
+      }
+      cache.forEach(p=>{
+        const tr=document.createElement('tr');
+        const status = (p.qty < p.low_stock) ? 'critical' : 'low';
+        if(status==='critical') tr.classList.add('status-critical'); else tr.classList.add('status-low');
+        tr.innerHTML = `
+          <td>${escapeHtml(p.name||'')}</td>
+          <td>${p.qty||0}</td>
+          <td>${p.low_stock||0}</td>
+          <td>${escapeHtml(p.store_name||'')}</td>
+          <td><span class="badge ${status==='critical'?'critical':'low'}">${status==='critical'?'حرج':'منخفض'}</span></td>`;
+        tbody.appendChild(tr);
+      });
+      countInfo.textContent = cache.length + ' منتج';
+    }
+
+    refreshBtn.addEventListener('click', loadLow);
+    storeSel.addEventListener('change', loadLow);
+    backBtn.addEventListener('click', ()=>{ window.location='index.html'; });
+    window.addEventListener('keydown', e=>{ if(e.key==='F5'){ e.preventDefault(); loadLow(); } });
+
+    loadStores().then(loadLow);
+  </script>
+</body>
+</html>

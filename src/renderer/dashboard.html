@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة التحكم</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" />
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f2f5f8;color:#123;}
+    header{display:flex;align-items:center;gap:14px;padding:14px 18px;background:#fff;border-bottom:2px solid #000;}
+    h1{margin:0;font-size:22px;}
+    main{padding:24px;display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+    .card{background:#fff;border:2px solid #000;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 4px 14px -6px rgba(0,0,0,0.15);} 
+    .card h2{margin:0;font-size:17px;}
+    a.btn{display:inline-block;text-decoration:none;background:#0d63c7;color:#fff;font-weight:700;padding:9px 16px;border-radius:12px;border:2px solid #063a74;font-size:13px;transition:.25s;}
+    a.btn:hover,
+    a.btn:focus-visible{background:#0a4f9e;outline:2px solid #063a74;outline-offset:2px;}
+    .small{font-size:12px;opacity:.7;font-weight:600;}
+    footer{margin-top:30px;text-align:center;font-size:12px;opacity:.6;}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>لوحة التحكم</h1>
+    <div style="flex:1"></div>
+    <button id="backBtn" style="display:none;">رجوع</button>
+  </header>
+  <main>
+    <div class="card">
+      <h2>المنتجات</h2>
+      <div class="small">عرض وإدارة المنتجات.</div>
+      <a class="btn" href="products.html">الدخول</a>
+    </div>
+    <div class="card">
+      <h2>المبيعات</h2>
+      <div class="small">نقطة البيع وإدارة الفواتير.</div>
+      <a class="btn" href="pos.html">الدخول</a>
+    </div>
+    <div class="card">
+      <h2>الإعدادات</h2>
+      <div class="small">تهيئة النظام الأساسية.</div>
+      <a class="btn" href="settings.html">الدخول</a>
+    </div>
+  </main>
+  <footer>© 2025 Asas</footer>
+  <script src="navigation.js"></script>
+</body>
+</html>

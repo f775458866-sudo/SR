@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>فاتورة ضريبية مبسطة</title>
+  <style>
+    @page { size: A4; margin:15mm; }
+    :root { --gray:#E5E7EB; --border:#000; --font:'Tajawal','Cairo','Tahoma',sans-serif; }
+    html,body { margin:0; padding:0; font-family:var(--font); color:#000; background:#fff; }
+    body { direction:rtl; }
+  .sheet { position:relative; min-height: calc(297mm - 30mm); border:2px solid var(--border); padding:10mm 10mm 14mm; box-sizing:border-box; display:flex; flex-direction:column; }
+    .flex { display:flex; }
+    .between { justify-content:space-between; }
+    .col { display:flex; flex-direction:column; }
+  .header-block { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:24px; }
+  .header-block .company-box { text-align:right; flex:1; }
+  /* QR داخل الهيدر مقابل بيانات التاجر */
+  .qr-inline { width:30mm; height:30mm; display:flex; align-items:center; justify-content:center; }
+  .qr-inline svg { width:100%; height:100%; }
+    .company-box { line-height:1.35; font-size:10pt; flex:1; }
+    .company-box .c-name { font-size:14pt; font-weight:700; }
+    .company-box .c-desc { font-size:10pt; font-weight:500; }
+    .company-box .c-line { font-size:10pt; }
+    .hr-sep { border:none; border-top:2px solid #000; margin:4px 0 10px; }
+    .invoice-info { border:1px solid #000; padding:8px 10px 10px; margin:0 auto 12px; width:100%; box-sizing:border-box; }
+  .invoice-info h1 { margin:0 0 8px; text-align:center; font-size:16pt; font-weight:700; letter-spacing:.5px; }
+    .two-cols { display:flex; gap:32px; font-size:10pt; }
+    .two-cols .col { flex:1; gap:4px; }
+    .fld { display:flex; gap:6px; }
+    .lbl { font-weight:700; white-space:nowrap; }
+    table.items { width:100%; border-collapse:collapse; font-size:9.5pt; margin-bottom:14px; }
+    table.items thead tr th { background:var(--gray); text-align:center; font-weight:700; padding:4px 3px; border:1px solid #000; }
+    table.items thead tr.en th { font-weight:600; font-size:9pt; }
+    table.items tbody td { border:1px solid #000; padding:4px 3px; text-align:center; font-weight:500; }
+    table.items tbody td.l { text-align:right; }
+    .placeholder-row { color:#555; }
+  .summary-area { display:flex; gap:20px; align-items:flex-start; }
+  /* أزلنا الموضع المطلق للـ QR وأصبح داخل الهيدر */
+    .totals-box { flex:1; }
+    table.totals { width:100%; border-collapse:collapse; font-size:10pt; }
+    table.totals td { border:1px solid #000; padding:6px 8px; }
+    table.totals td.lbl { font-weight:700; width:48%; }
+    table.totals tr.final td { background:var(--gray); font-size:12pt; font-weight:700; }
+    .footer { margin-top:auto; padding-top:12px; font-size:10pt; }
+    .sign-line { margin-top:28px; font-size:10pt; }
+    .sign-line span { font-weight:700; }
+    @media print { .sheet { box-shadow:none; } }
+  /* === تحسين تموضع رأس الفاتورة: جعل بيانات التاجر في الزاوية العليا اليمنى و QR في اليسرى === */
+  .header-block { position:relative; align-items:flex-start; gap:0; margin-bottom:6px; min-height:32mm; }
+  .header-block .company-box { position:absolute; top:0; right:0; max-width:70mm; }
+  .header-block .qr-inline { position:absolute; top:0; left:0; }
+  .sheet { padding-top:8mm; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <!-- رأس الشركة مع QR مقابل المعلومات -->
+    <div class="header-block">
+      <div class="company-box">
+        <div class="c-name" id="compName">[اسم التاجر]</div>
+        <div class="c-line"><strong>الرقم الضريبي:</strong> <span id="compVat">[الرقم الضريبي]</span></div>
+        <div class="c-line"><strong>السجل التجاري:</strong> <span id="compCR">[السجل التجاري]</span></div>
+      </div>
+  <div class="qr-inline" id="qrBox" aria-label="رمز الاستجابة السريع (زاتكا)"></div>
+    </div>
+    <hr class="hr-sep"/>
+    <!-- 2. بلوك معلومات الفاتورة -->
+    <div class="invoice-info">
+      <h1 id="invoiceTitle">فاتورة ضريبية مبسطة</h1>
+      <div class="two-cols">
+        <div class="col" id="colRight">
+          <div class="fld"><span class="lbl">رقم الفاتورة / Invoice No:</span><span id="invNo">[Auto]</span></div>
+          <div class="fld"><span class="lbl">التاريخ / Date:</span><span id="invDate">[Date]</span></div>
+          <div class="fld"><span class="lbl">الهاتف / Tel:</span><span id="invPhone">[Tel]</span></div>
+        </div>
+        <div class="col" id="colLeft">
+          <div class="fld"><span class="lbl">العميل / Customer:</span><span id="custName">[Customer Name]</span></div>
+          <div class="fld"><span class="lbl">العنوان / Address:</span><span id="custAddr">[Address]</span></div>
+          <div class="fld"><span class="lbl">الرقم الضريبي / VAT No:</span><span id="custVat">[Cust VAT]</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- 3. جدول العناصر -->
+    <table class="items" id="itemsTable" aria-label="Items Table">
+      <thead>
+        <tr class="ar">
+          <th>مسلسل</th>
+          <th>رقم الصنف</th>
+          <th>اسم الصنف</th>
+          <th>وحدة</th>
+          <th>الكمية</th>
+          <th>سعر الوحدة</th>
+          <th>الإجمالي قبل الضريبة</th>
+          <th>قيمة الضريبة</th>
+          <th>الصافي شامل الضريبة</th>
+        </tr>
+        <tr class="en">
+          <th>Seq</th>
+          <th>Item Code</th>
+          <th>Item Name</th>
+          <th>Unit</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th>Total (Ex VAT)</th>
+          <th>VAT Amount</th>
+          <th>Net (Inc VAT)</th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody">
+        <tr class="placeholder-row"><td>1</td><td>—</td><td class="l">—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr class="placeholder-row"><td>2</td><td>—</td><td class="l">—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <!-- 4. الملخص (بدون صندوق QR هنا بعد نقله للأعلى) -->
+  <div class="summary-area">
+      <div class="totals-box" style="flex:1;">
+        <table class="totals" aria-label="Totals Table">
+          <tbody>
+            <tr><td class="lbl">الإجمالي الفرعي / Subtotal</td><td id="tSubtotal">[0.00]</td></tr>
+            <tr><td class="lbl">مبلغ الخصم / Discount</td><td id="tDiscount">[0.00]</td></tr>
+            <tr><td class="lbl">إجمالي ضريبة القيمة المضافة / Total VAT</td><td id="tVat">[0.00]</td></tr>
+            <tr class="final"><td class="lbl">إجمالي المستحق / Total Due</td><td id="tTotal">[0.00]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- 5. التذييل -->
+    <div class="footer">
+      <div class="sign-line"><span>توقيع المستلم:</span> ..............................................................</div>
+  <div id="invoiceCustomFooter" style="margin-top:10px;white-space:pre-line;font-size:9.5pt;font-weight:600;text-align:center;"></div>
+    </div>
+  </div>
+  <script src="../src/renderer/qr-lite.js"></script>
+  <script>
+  (function(){
+    function qs(n){ return new URLSearchParams(location.search).get(n); }
+    function fmt(n){ return (n||0).toFixed(2); }
+    // ---- توليد TLV زاتكا ثم QR (نسخة مبسطة تدعم طول بيانات صغير) ----
+    function utf8Bytes(str){ const out=[]; for(let i=0;i<str.length;i++){ let c=str.charCodeAt(i); if(c<0x80){ out.push(c); } else if(c<0x800){ out.push(0xC0|(c>>6), 0x80|(c&63)); } else if(c<0x10000){ out.push(0xE0|(c>>12),0x80|((c>>6)&63),0x80|(c&63)); } else { out.push(0xF0|(c>>18),0x80|((c>>12)&63),0x80|((c>>6)&63),0x80|(c&63)); } } return out; }
+    function tlvEncode(fields){ // fields: [[tag, value], ...]
+      const bytes=[]; for(const [tag,val] of fields){ const data=utf8Bytes(val||''); bytes.push(tag); bytes.push(data.length); bytes.push(...data); } return bytes; }
+    function bytesToBase64(bytes){ let bin=''; for(const b of bytes){ bin+=String.fromCharCode(b); } return btoa(bin); }
+  // سعات مبسطة للنسخ 1-4 مع إضافة مستوى L لاستيعاب بيانات أطول
+  const QR_VERSIONS_BASE = {1:21,2:25,3:29,4:33};
+  const CAP_Q = {1:13,2:22,3:34,4:48};
+  const CAP_M = {1:16,2:28,3:44,4:64};
+  const CAP_L = {1:20,2:32,3:52,4:78};
+  const EC_LEN_Q = {1:13,2:22,3:36,4:52};
+  const EC_LEN_M = {1:10,2:16,3:26,4:36};
+  const EC_LEN_L = {1:7,2:10,3:15,4:20};
+    function rsGenPoly(ecLen){ let poly=[1]; for(let i=0;i<ecLen;i++){ poly = polyMul(poly,[1, gfPow(2,i)]); } return poly; }
+    const GF_EXP=new Array(512); const GF_LOG=new Array(256); (function(){ let x=1; for(let i=0;i<255;i++){ GF_EXP[i]=x; GF_LOG[x]=i; x<<=1; if(x&0x100) x^=0x11d; } for(let i=255;i<512;i++) GF_EXP[i]=GF_EXP[i-255]; })();
+    function gfMul(a,b){ if(a===0||b===0) return 0; return GF_EXP[(GF_LOG[a]+GF_LOG[b])%255]; }
+    function gfPow(a,e){ let r=1; for(let i=0;i<e;i++) r=gfMul(r,a); return r; }
+    function polyMul(p,q){ const r=new Array(p.length+q.length-1).fill(0); for(let i=0;i<p.length;i++){ for(let j=0;j<q.length;j++){ r[i+j]^=gfMul(p[i],q[j]); } } return r; }
+    function polyMod(msg, gen){ let res=msg.slice(); for(let i=0;i<msg.length-(gen.length-1); i++){ const coef=res[i]; if(coef!==0){ for(let j=1;j<gen.length;j++){ res[i+j]^=gfMul(gen[j],coef); } } } return res.slice(res.length-(gen.length-1)); }
+    function buildQRData(dataBytes){
+  // نحاول Q ثم M ثم L (أقل تصحيح = سعة أعلى)
+  const tryLevels = ['Q','M','L'];
+      for(const lvl of tryLevels){
+        for(let v=1; v<=4; v++){
+          const capacity = (lvl==='Q'? CAP_Q[v]: (lvl==='M'? CAP_M[v]: CAP_L[v]));
+          if(dataBytes.length <= capacity){
+            const ecLen = (lvl==='Q'? EC_LEN_Q[v]: (lvl==='M'? EC_LEN_M[v]: EC_LEN_L[v]));
+            const dataCodewordsTarget = capacity; // نستعمل نفس القيمة كعدد بايت البيانات
+            let bits=[]; const pushBits=(val,len)=>{ for(let i=len-1;i>=0;i--) bits.push((val>>i)&1); };
+            pushBits(0b0100,4); // mode
+            pushBits(dataBytes.length,8);
+            for(const b of dataBytes) pushBits(b,8);
+            const maxBits = dataCodewordsTarget*8;
+            let remaining = maxBits - bits.length; if(remaining>0){ const t=Math.min(4,remaining); for(let i=0;i<t;i++) bits.push(0); }
+            while(bits.length%8!==0) bits.push(0);
+            const codewords=[]; for(let i=0;i<bits.length;i+=8){ let b=0; for(let j=0;j<8;j++) b=(b<<1)|bits[i+j]; codewords.push(b); }
+            const padSeq=[0xEC,0x11]; let pi=0; while(codewords.length<dataCodewordsTarget){ codewords.push(padSeq[pi%2]); pi++; }
+            const gen = rsGenPoly(ecLen);
+            const ec = polyMod(codewords.concat(new Array(ecLen).fill(0)), gen);
+            return {version:v, level:lvl, codewords: codewords.concat(ec)};
+          }
+        }
+      }
+      throw new Error('TLV أطول من قدرة النسخ 1-4');
+    }
+  function placeQRMatrix(v, codewords){ const size = QR_VERSIONS_BASE[v]; const m = Array.from({length:size}, ()=> new Array(size).fill(null));
+      function placeFinder(r,c){ for(let i=0;i<7;i++){ for(let j=0;j<7;j++){ const inEdge = (i===0||i===6||j===0||j===6); const inCore = i>=2&&i<=4&&j>=2&&j<=4; m[r+i][c+j] = (inEdge||inCore)?1:0; } } }
+      placeFinder(0,0); placeFinder(0,size-7); placeFinder(size-7,0);
+      for(let i=0;i<size;i++){ if(m[6][i]==null) m[6][i]= i%2===0?1:0; if(m[i][6]==null) m[i][6]= i%2===0?1:0; }
+      if(v>1){ // محاذاة مركزية مبسطة (نستخدم نمط واحد في المنتصف)
+        const pos = [size-7-4]; pos.forEach(pr=> pos.forEach(pc=>{ if(m[pr][pc]==null){ for(let i=0;i<5;i++){ for(let j=0;j<5;j++){ const edge = i===0||i===4||j===0||j===4; m[pr+i][pc+j]= edge?1:(i===2&&j===2?1:0); } } } })); }
+      // dark module ثابت
+      m[4*v+9][8]=1; // تقريباً للمواصفة
+      // محجوز منطقة معلومات
+      for(let i=0;i<9;i++){ if(m[i][8]==null) m[i][8]=0; if(m[8][i]==null) m[8][i]=0; }
+      for(let i=size-8;i<size;i++){ if(m[8][i]==null) m[8][i]=0; if(m[i][8]==null) m[i][8]=0; }
+      // تعبئة البيانات (مسار من اليمين لليسار عمودين عمودين)
+      let dirUp=true; let col=size-1; let bitIdx=0; const totalBits=codewords.length*8;
+      function getBit(ci){ const byte = codewords[Math.floor(ci/8)]; return (byte >> (7-(ci%8))) &1; }
+      while(col>0){ if(col===6) col--; // تخطي عمود التوقيت
+        for(let row=0; row<size; row++){
+          const r = dirUp? (size-1-row):row;
+          for(let cOff=0;cOff<2;cOff++){
+            const c = col - cOff;
+            if(m[r][c]==null){ const bit = bitIdx< totalBits? getBit(bitIdx):0; bitIdx++; // قناع (mask 0)
+              m[r][c]= bit ^ ((r+c)%2===0?1:0); }
+          }
+        }
+        col -=2; dirUp=!dirUp;
+      }
+      // تطبيق معلومات الشكل (format) لقناع 0 و مستوى M (00) + BCH ثم XOR 0x5412
+      function formatBitsRaw(){ // 5 بت: EC (00) + mask (000)
+        let val=0; // 00000
+        // BCH
+        let vBits = val<<10; const poly=0b10100110111; for(let i=14;i>=10;i--){ if((vBits>>i)&1) vBits ^= (poly << (i-10)); }
+        let f = (val<<10)|vBits; f ^= 0b101010000010010; return f; }
+      const f = formatBitsRaw();
+      for(let i=0;i<15;i++){
+        const bit = (f>>i)&1; // مواقع قياسية
+        // عمود 8 (من أعلى لأسفل باستثناء)
+        if(i<6) m[i][8]=bit; else if(i===6) m[i+1][8]=bit; else if(i<8) m[size-15+i][8]=bit; else m[8][14-i]=bit;
+        // صف 8
+        if(i<8) m[8][size-1-i]=bit; else if(i<9) m[8][15-i]=bit; else m[14-i][8]=bit;
+      }
+      return m; }
+    function qrMatrixToSvg(m, box=3){ const size=m.length; let svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${size} ${size}' width='${size*box}' height='${size*box}'>`;
+      svg+="<rect width='100%' height='100%' fill='#fff'/>"; for(let r=0;r<size;r++){ for(let c=0;c<size;c++){ if(m[r][c]) svg+=`<rect x='${c}' y='${r}' width='1' height='1' fill='#000'/>`; } } return svg+="</svg>"; }
+    async function makeZatcaQrSvg(seller, vatNo, isoDate, total, vat){
+      const tlv = tlvEncode([[1,seller],[2,vatNo],[3,isoDate],[4,''+total],[5,''+vat]]);
+      const b64 = bytesToBase64(tlv);
+      try {
+        if(window.api && window.api.generateQrSvg){
+          const r = await window.api.generateQrSvg(b64);
+            if(r && r.ok && r.svg) return r.svg;
+        }
+      } catch(_e){ /* تجاهل وسنستخدم fallback */ }
+      try { if(window.__qrLite) return window.__qrLite.generateQR(b64,{level:'Q',scale:3}); } catch(_e2){}
+      return '<div style="font:9pt monospace;color:#900;">QR Fallback Fail</div>';
+    }
+    async function load(){
+      const sid = qs('sale_id'); const inv = qs('invoice');
+  // محاولة قراءة إعدادات مشفرة قادمة من المعالج (cfg)
+      let injectedCfg=null;
+      try {
+        const c = qs('cfg');
+        if(c){
+          // فك Base64 إلى بايتات ثم UTF-8 لضمان ظهور العربية بشكل صحيح
+          const bin = atob(c);
+            const bytes = new Uint8Array(bin.length);
+            for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+            const txt = (window.TextDecoder? new TextDecoder('utf-8').decode(bytes)
+              : decodeURIComponent(escape(bin)) );
+            injectedCfg = JSON.parse(txt);
+        }
+      } catch(_){ injectedCfg=null; }
+  let sale=null;
+      if(sid){ try { const r = await window.api.saleGet(parseInt(sid)); if(r && r.ok) sale = r.sale; } catch(_){ } }
+      if(!sale && inv){ try { const r2 = await window.api.saleGetByInvoice(inv); if(r2 && r2.ok) sale = r2.sale; } catch(_){ } }
+      if(!sale){ document.body.innerHTML = '<div style="padding:40px;font:16pt var(--font);text-align:center;">لم يتم العثور على الفاتورة</div>'; return; }
+      // جلب الإعدادات العامة للشركة (اسم، هاتف، عنوان، رقم ضريبي، سجل تجاري)
+      let settingsMap={};
+      // أولاً نطبق القيم المحقونة مباشرة لضمان ظهورها
+      if(injectedCfg){
+        if(injectedCfg.cn) document.getElementById('compName').textContent = injectedCfg.cn;
+        if(injectedCfg.vat){ const el=document.getElementById('compVat'); el.textContent = injectedCfg.vat; } else document.getElementById('compVat').closest('.c-line').style.display='none';
+        if(injectedCfg.cr){ const el=document.getElementById('compCR'); el.textContent = injectedCfg.cr; } else document.getElementById('compCR').closest('.c-line').style.display='none';
+        settingsMap.company_name = injectedCfg.cn||'';
+        settingsMap.vat_number = injectedCfg.vat||'';
+        settingsMap.cr_number = injectedCfg.cr||'';
+      }
+      // ثم نحاول جلب الإعدادات (قد تفشل لصلاحيات) ولا نزيل القيم الحالية إن كانت موجودة
+      try { const st = await window.api.settingsList(); if(st.ok){ st.rows.forEach(r=> settingsMap[r.key]=r.value); } } catch(_){ }
+      if(settingsMap.company_name) document.getElementById('compName').textContent = settingsMap.company_name;
+      if(settingsMap.vat_number){ const el=document.getElementById('compVat'); el.textContent = settingsMap.vat_number; el.closest('.c-line').style.display=''; }
+      if(settingsMap.cr_number){ const el=document.getElementById('compCR'); el.textContent = settingsMap.cr_number; el.closest('.c-line').style.display=''; }
+  // تعبئة بيانات التاجر مع بدائل من localStorage عند غياب القيم في الإعدادات
+  if(!settingsMap.company_name){ try { settingsMap.company_name = localStorage.getItem('setting_company_name') || ''; } catch(_){} }
+  if(!settingsMap.vat_number){ try { settingsMap.vat_number = localStorage.getItem('setting_vat_number') || ''; } catch(_){} }
+  if(!settingsMap.cr_number){ try { settingsMap.cr_number = localStorage.getItem('setting_cr_number') || ''; } catch(_){} }
+
+  const cmpNameEl = document.getElementById('compName');
+  const cmpVatEl  = document.getElementById('compVat');
+  const cmpCREl   = document.getElementById('compCR');
+  if(settingsMap.company_name) cmpNameEl.textContent = settingsMap.company_name;
+  if(settingsMap.vat_number) cmpVatEl.textContent = settingsMap.vat_number; else cmpVatEl.closest('.c-line').style.display='none';
+  if(settingsMap.cr_number) cmpCREl.textContent = settingsMap.cr_number; else cmpCREl.closest('.c-line').style.display='none';
+  const footerNote = settingsMap.invoice_footer_note || localStorage.getItem('setting_invoice_footer_note') || '';
+  if(footerNote){ const fEl=document.getElementById('invoiceCustomFooter'); if(fEl) fEl.textContent = footerNote; }
+  // أزيل صندوق الشعار (تم طلب حذفه)
+      // محاولة جلب العميل
+      let customerName='بدون', customerAddr='-', customerVat='-';
+      if(sale.customer_id){ try { const cl = await window.api.customersList(''); if(cl.ok){ const c = cl.rows.find(x=> x.id===sale.customer_id); if(c){ customerName=c.name||'بدون'; customerAddr=c.address||c.city||'-'; customerVat=c.vat||'-'; } } } catch(_){ } }
+      // تعبئة رأس الفاتورة
+      document.getElementById('invNo').textContent = sale.invoice_no || sale.id;
+      document.getElementById('invDate').textContent = (sale.created_at||'').replace('T',' ').slice(0,16);
+      document.getElementById('custName').textContent = customerName;
+      document.getElementById('custAddr').textContent = customerAddr || '-';
+  document.getElementById('custVat').textContent = customerVat || '-';
+  // تغيير عنوان الفاتورة حسب العميل
+  const titleEl = document.getElementById('invoiceTitle');
+  const simplified = (!customerVat || customerVat==='-' || customerName==='بدون' || /نقد/.test(customerName));
+  titleEl.textContent = simplified? 'فاتورة مبسطة' : 'فاتورة ضريبية';
+      // تقدير نسبة الضريبة
+      const vatRate = (sale.vat && sale.subtotal) ? (sale.vat / sale.subtotal) : 0.15;
+      const items = (sale.items||[]).map((it,i)=>{
+        const unitInc = +(it.price||0);
+        const lineInc = unitInc * (it.qty||0);
+        const lineEx = +(lineInc / (1+vatRate)).toFixed(2);
+        const lineVat = +(lineInc - lineEx).toFixed(2);
+        return {
+          seq:i+1,
+          code: it.product_id || '',
+          name: it.product_name || it.name || '',
+          unit: 'وحدة',
+            qty: it.qty||0,
+            unitPrice: unitInc.toFixed(2),
+            totalEx: lineEx.toFixed(2),
+            vat: lineVat.toFixed(2),
+            net: lineInc.toFixed(2)
+        };
+      });
+      const body = document.getElementById('itemsBody');
+      if(items.length){
+        body.innerHTML = items.map(r=>`<tr><td>${r.seq}</td><td>${r.code}</td><td class='l'>${r.name}</td><td>${r.unit}</td><td>${r.qty}</td><td>${r.unitPrice}</td><td>${r.totalEx}</td><td>${r.vat}</td><td>${r.net}</td></tr>`).join('');
+      }
+      // المبالغ
+      document.getElementById('tSubtotal').textContent = fmt(sale.subtotal || 0);
+      document.getElementById('tDiscount').textContent = fmt(sale.discount || 0);
+      document.getElementById('tVat').textContent = fmt(sale.vat || 0);
+      document.getElementById('tTotal').textContent = fmt(sale.total || 0);
+      // توليد QR زاتكا ووضعه داخل qr-box
+      try {
+  let seller = (settingsMap.company_name || 'Shop').trim();
+  if(seller.length>40) seller = seller.slice(0,40);
+  const vatNo = (settingsMap.vat_number || '-').trim();
+  const iso = new Date(sale.created_at|| new Date()).toISOString().replace(/\.\d{3}Z$/,'Z');
+  const svg = await makeZatcaQrSvg(seller, vatNo, iso, sale.total||0, sale.vat||0);
+  const qr = document.getElementById('qrBox'); if(qr){ qr.innerHTML = svg; }
+      } catch(err){ console.warn('QR fail', err); }
+  // إشارة للعميل (العملية الرئيسية) أن الصفحة جاهزة للطباعة
+  window.__A4_INVOICE_READY__ = true;
+    }
+    load();
+  })();
+  </script>
+</body>
+</html>

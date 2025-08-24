@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>كشف حساب عميل</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{font-family:'Cairo',sans-serif;}
+    @page{ size:A4; margin:1cm; }
+    @media print{
+      .no-print{display:none!important}
+      html,body{background:#fff!important}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid;page-break-after:auto}
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-6">
+  <button onclick="window.print()" class="no-print fixed top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-full shadow">طباعة / PDF</button>
+  <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6 md:p-10 space-y-6">
+    <!-- معلومات التاجر والعميل في مربع واحد -->
+    <section class="border rounded-lg bg-gray-50 p-5 space-y-5">
+      <div class="grid md:grid-cols-2 gap-8 items-start">
+        <!-- التاجر (يمين) -->
+        <div class="space-y-1 md:pr-2 order-1">
+          <h2 class="text-xl font-extrabold text-blue-600 mb-3">معلومات التاجر</h2>
+          <ul class="text-sm leading-relaxed space-y-1">
+            <li><span class="font-semibold">الاسم:</span> <span id="companyName" class="font-bold text-gray-800">اسم الشركة</span></li>
+            <li id="companyAddress" class="text-gray-600">العنوان: —</li>
+            <li class="text-gray-600">الهاتف: <span id="companyPhone" class="font-semibold">—</span></li>
+            <li class="text-gray-600">الإيميل: <span id="companyEmail" class="font-semibold">—</span></li>
+            <li class="text-gray-600">الرقم الضريبي: <span id="companyVat" class="font-semibold">—</span></li>
+            <li class="text-gray-600">السجل التجاري: <span id="companyCR" class="font-semibold">—</span></li>
+          </ul>
+        </div>
+        <!-- العميل (يسار) -->
+        <div class="space-y-1 md:pl-6 md:border-l md:border-gray-300 order-2">
+          <h2 class="text-xl font-extrabold text-blue-600 mb-3">بيانات العميل</h2>
+          <ul class="text-sm leading-relaxed space-y-1">
+            <li><span class="font-semibold">الاسم:</span> <span id="custName">—</span></li>
+            <li><span class="font-semibold">رقم العميل:</span> <span id="custId">—</span></li>
+            <li><span class="font-semibold">العنوان:</span> <span id="custAddress">—</span></li>
+            <li><span class="font-semibold">الرقم الضريبي:</span> <span id="custVat">—</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-4 gap-4 text-sm">
+        <div><span class="font-semibold">رقم التقرير:</span> <span id="reportNo">—</span></div>
+        <div><span class="font-semibold">التاريخ:</span> <span id="reportDate">—</span></div>
+        <div><span class="font-semibold">الفترة:</span> <span id="periodFrom">—</span> – <span id="periodTo">—</span></div>
+        <div><span class="font-semibold">المستخدم:</span> <span id="userName">—</span></div>
+        <div><span class="font-semibold">عدد السجلات:</span> <span id="recordsCount">0</span></div>
+        <div><span class="font-semibold">الرصيد الافتتاحي:</span> <span id="openingBalanceTxt">0.00</span></div>
+        <div class="md:col-span-2"><span class="font-semibold">ملاحظات:</span> <span id="notes">—</span></div>
+      </div>
+    </section>
+    <!-- Table -->
+    <section>
+      <div class="overflow-x-auto rounded-md border">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-200 text-gray-800">
+            <tr class="uppercase text-[11px] tracking-wider">
+              <th class="py-2 px-2 font-bold">التاريخ</th>
+              <th class="py-2 px-2 font-bold text-right">البيان / المرجع</th>
+              <th class="py-2 px-2 font-bold">مدين</th>
+              <th class="py-2 px-2 font-bold">دائن</th>
+              <th class="py-2 px-2 font-bold">الرصيد</th>
+            </tr>
+          </thead>
+          <tbody id="rowsBody">
+            <tr class="bg-gray-50 hover:bg-gray-100 transition">
+              <td class="py-2 px-2 text-center">—</td>
+              <td class="py-2 px-2 text-right">رصيد افتتاحي</td>
+              <td class="py-2 px-2 text-center text-red-600" data-debit>0.00</td>
+              <td class="py-2 px-2 text-center text-green-600" data-credit>0.00</td>
+              <td class="py-2 px-2 text-center font-semibold" data-balance>0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- Summary -->
+    <section class="flex justify-end">
+      <table class="text-sm min-w-[260px]">
+        <tbody>
+          <tr>
+            <td class="py-2 px-3 font-semibold text-gray-700">إجمالي المدين</td>
+            <td id="totalDebit" class="py-2 px-3 text-red-600 font-bold">0.00</td>
+          </tr>
+          <tr>
+            <td class="py-2 px-3 font-semibold text-gray-700">إجمالي الدائن</td>
+            <td id="totalCredit" class="py-2 px-3 text-green-600 font-bold">0.00</td>
+          </tr>
+          <tr class="bg-blue-100 border-t-2 border-blue-500">
+            <td class="py-2 px-3 font-bold text-blue-800 text-lg">الرصيد الختامي</td>
+            <td id="finalBalance" class="py-2 px-3 font-bold text-blue-800 text-lg">0.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <!-- Notes -->
+    <section class="text-xs text-gray-500 space-y-1">
+      <p id="notes">—</p>
+      <p>هذا الكشف مُنشأ بواسطة الحاسب ولا يتطلب توقيع.</p>
+      <p class="mt-2">© <span id="yearNow"></span> | صفحة 1 / 1</p>
+    </section>
+  </div>
+
+  <script>
+    document.getElementById('yearNow').textContent = new Date().getFullYear();
+    (function(){
+      const qs = new URLSearchParams(location.search); const raw = qs.get('data'); if(!raw) return;
+      let data; try { data = JSON.parse(decodeURIComponent(atob(raw))); } catch(e){ console.error(e); return; }
+      const S=(id,val)=>{ const el=document.getElementById(id); if(el!=null && val!==undefined && val!==null) el.textContent=val; };
+  if(data.company){ S('companyName',data.company.name); S('companyAddress','العنوان: '+(data.company.address||'')); S('companyPhone',data.company.phone); S('companyEmail',data.company.email); S('companyVat',data.company.vat); S('companyCR',data.company.cr); }
+      if(data.customer){ S('custName',data.customer.name); S('custId',data.customer.id); S('custAddress',data.customer.address||'—'); S('custVat',data.customer.vat||'—'); }
+      if(data.report){ S('reportNo',data.report.no); S('reportDate',(data.report.date||'').slice(0,10)); S('periodFrom',(data.report.from||'').slice(0,10)||'—'); S('periodTo',(data.report.to||'').slice(0,10)||'—'); S('userName',data.report.user||'—'); }
+      S('notes', data.notes||'');
+      let opening = Number(data.openingBalance||0); S('openingBalanceTxt', opening.toFixed(2));
+      const body = document.getElementById('rowsBody'); const first = body.querySelector('tr'); if(first){ first.querySelector('[data-balance]').textContent = opening.toFixed(2); }
+      let bal=opening, td=0, tc=0; (data.entries||[]).forEach(en=>{ const d=Number(en.debit||0), c=Number(en.credit||0); bal+=d-c; td+=d; tc+=c; const tr=document.createElement('tr'); tr.className='hover:bg-gray-100 transition'; tr.innerHTML = `<td class='py-2 px-2 text-center'>${(en.date||'').slice(0,10)}</td><td class='py-2 px-2 text-right'>${en.ref||''}</td><td class='py-2 px-2 text-center text-red-600'>${d.toFixed(2)}</td><td class='py-2 px-2 text-center text-green-600'>${c.toFixed(2)}</td><td class='py-2 px-2 text-center font-semibold'>${bal.toFixed(2)}</td>`; body.appendChild(tr); });
+      S('totalDebit', td.toFixed(2)); S('totalCredit', tc.toFixed(2)); S('finalBalance', bal.toFixed(2)); S('recordsCount',(data.entries||[]).length);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>إدارة العملاء</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+    body{margin:0;background:linear-gradient(135deg,#e3edf5,#d5e3ef,#e9f1f8);color:#0d2d3a;}
+    .page-shell{display:flex;flex-direction:column;min-height:100vh;}
+    header.page-header{display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.28);backdrop-filter:blur(16px) saturate(170%);-webkit-backdrop-filter:blur(16px) saturate(170%);box-shadow:0 0 0 1px rgba(255,255,255,0.4) inset,0 4px 14px -8px rgba(0,0,0,0.25);}
+    header.page-header h1{margin:0;font-size:26px;font-weight:800;letter-spacing:.5px;}
+    .header-spacer{flex:1;}
+    button.primary,button.secondary{cursor:pointer;font-size:13px;font-weight:700;padding:9px 20px;border:1px solid rgba(0,0,0,0.25);background:linear-gradient(145deg,rgba(255,255,255,0.7),rgba(255,255,255,0.4));border-radius:14px;color:#0d2d3a;backdrop-filter:blur(10px) saturate(170%);-webkit-backdrop-filter:blur(10px) saturate(170%);box-shadow:0 2px 4px rgba(0,0,0,0.15),0 0 0 1px rgba(255,255,255,0.65) inset;transition:.25s;}
+    button.primary:hover,button.secondary:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.75) inset;}
+    button.secondary{background:linear-gradient(145deg,rgba(255,255,255,0.55),rgba(255,255,255,0.35));}
+    /* شريط البحث */
+    .search-bar{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.35);display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.25);backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%);}
+    .search-wrap{position:relative;flex:1;}
+    .search-wrap input{width:100%;padding:12px 14px 12px 40px;border:1px solid rgba(0,0,0,0.25);border-radius:16px;font-size:14px;font-weight:600;background:linear-gradient(130deg,rgba(255,255,255,0.75),rgba(255,255,255,0.45));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-weight:600;color:#0d3244;}
+    .search-wrap input:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 1px #1976d2,0 0 0 3px rgba(25,118,210,0.35),0 4px 10px -4px rgba(25,118,210,0.45);background:rgba(255,255,255,0.9);}
+    .search-wrap span.icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;}
+    /* الجدول */
+    .table-wrap{flex:1;padding:22px 22px 34px 22px;overflow:auto;background:rgba(255,255,255,0.18);backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:860px;}
+    th,td{border:1px solid rgba(0,0,0,0.2);padding:10px 12px;font-size:13px;text-align:center;background:rgba(255,255,255,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-weight:600;color:#123646;}
+    th{font-size:14px;font-weight:800;background:linear-gradient(135deg,rgba(255,255,255,0.85),rgba(240,244,248,0.7));color:#103247;}
+    tbody tr:nth-child(even) td{background:rgba(255,255,255,0.4);}
+    tbody tr:hover td{background:rgba(255,255,255,0.75);}
+    .actions-btn{cursor:pointer;border:2px solid #000;background:#fff;font-size:16px;font-weight:700;line-height:1;padding:4px 10px;border-radius:8px;}
+    .actions-btn:hover{background:#eef2f5;}
+    /* نموذج إضافة عميل (نافذة) */
+    .modal-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;display:none;align-items:center;justify-content:center;z-index:1000;background:rgba(255,255,255,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+    .modal{background:linear-gradient(160deg,rgba(255,255,255,0.9),rgba(245,249,252,0.85));border:2px solid #000;border-radius:26px;width:880px;max-width:96vw;max-height:90vh;overflow:auto;padding:28px 32px;box-shadow:0 0 0 1px rgba(255,255,255,0.55) inset;}
+    .modal h2{margin:0 0 18px;font-size:22px;font-weight:800;text-align:center;}
+    .type-switch{display:flex;gap:10px;margin-bottom:14px;}
+    .type-switch button{flex:1;border:1px solid rgba(0,0,0,0.3);background:linear-gradient(145deg,rgba(255,255,255,0.8),rgba(255,255,255,0.5));padding:12px 0;font-size:14px;font-weight:700;border-radius:18px;cursor:pointer;transition:.25s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+    .type-switch button.active{background:linear-gradient(145deg,#e4f2ff,#d6ecff);color:#0d47a1;box-shadow:0 0 0 2px rgba(25,118,210,0.35);}
+    form.customer-form{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px 16px;}
+    form.customer-form .field{display:flex;flex-direction:column;gap:4px;}
+    form.customer-form label{font-size:11px;font-weight:700;}
+    form.customer-form input,form.customer-form textarea{border:1px solid rgba(0,0,0,0.3);border-radius:14px;padding:10px 14px;font-size:13px;background:linear-gradient(140deg,rgba(255,255,255,0.72),rgba(255,255,255,0.45));resize:vertical;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-weight:600;color:#123949;}
+    form.customer-form input:focus,form.customer-form textarea:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 1px #1976d2,0 0 0 3px rgba(25,118,210,0.35);background:rgba(255,255,255,0.88);}
+    form.customer-form textarea{min-height:80px;grid-column:span 2;}
+    .address-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;grid-column:span 2;padding:14px 16px;border:1px solid rgba(0,0,0,0.3);border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,0.6),rgba(255,255,255,0.35));}
+    .address-grid .ag-title{grid-column:1/-1;font-size:12px;font-weight:800;margin-bottom:4px;}
+    .modal-actions{display:flex;gap:14px;justify-content:center;margin-top:20px;}
+    .modal-actions button{min-width:140px;}
+    .hidden{display:none !important;}
+    @media (max-width:640px){
+      .modal{padding:20px 22px;border-radius:22px;}
+      form.customer-form{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+      form.customer-form textarea{grid-column:1/-1;}
+      .address-grid{grid-column:1/-1;}
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-header">
+      <button id="backBtn" class="secondary" style="min-width:90px;">⟵ رجوع</button>
+      <h1>إدارة العملاء</h1>
+      <div class="header-spacer"></div>
+  <button id="btnAddCustomer" class="primary">➕ إضافة عميل جديد</button>
+      <button id="btnCustomerStatement" class="secondary">📄 كشف حساب عميل</button>
+    </header>
+    <div class="search-bar">
+      <div class="search-wrap"><input type="text" placeholder="بحث في العملاء (بالاسم أو الجوال)" disabled><span class="icon">🔍</span></div>
+    </div>
+    <div class="table-wrap">
+      <table id="customersTable">
+        <thead>
+          <tr>
+            <th>الاسم / اسم المؤسسة</th>
+            <th>الجوال</th>
+            <th>الرقم الضريبي</th>
+            <th>نوع الحساب</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="customersTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- نموذج إضافة عميل -->
+  <div id="customerModal" class="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle">
+      <h2 id="customerModalTitle">إضافة عميل</h2>
+      <div class="type-switch">
+        <button type="button" data-type="person" class="active">فردي</button>
+        <button type="button" data-type="est">مؤسسة</button>
+        <button type="button" data-type="company">شركة</button>
+      </div>
+      <form class="customer-form" id="customerForm" onsubmit="return false;">
+        <div class="field name-field" data-role="person"><label>اسم العميل</label><input type="text" id="custPersonName"></div>
+        <div class="field name-field hidden" data-role="est"><label>اسم المؤسسة</label><input type="text" id="custEstName"></div>
+        <div class="field name-field hidden" data-role="company"><label>اسم الشركة</label><input type="text" id="custCompName"></div>
+        <div class="field"><label>الجوال</label><input type="text" id="custMobile"></div>
+        <div class="field"><label>واتساب</label><input type="text" id="custWhatsapp"></div>
+        <div class="field"><label>البريد الإلكتروني</label><input type="email" id="custEmail"></div>
+        <div class="field"><label>الرقم الضريبي</label><input type="text" id="custVat"></div>
+        <div class="field est-only hidden"><label>السجل التجاري</label><input type="text" id="custCR"></div>
+        <div class="field est-only hidden"><label>تاريخ التأسيس</label><input type="date" id="custStartDate"></div>
+        <style>
+          .addr-rows{display:flex;flex-direction:column;gap:10px;width:100%;}
+          .addr-r{display:flex;gap:12px;flex-wrap:wrap;}
+          .addr-r .field{flex:1 1 0;min-width:160px;}
+          @media (max-width:640px){ .addr-r{flex-direction:column;} }
+        </style>
+        <div class="address-grid" id="nationalAddressBox">
+          <div class="ag-title">العنوان الوطني</div>
+          <div class="addr-rows">
+            <div class="addr-r">
+              <div class="field est-only hidden addr-field" data-addr="short_address"><label>العنوان المختصر</label><input type="text" id="addrShort"></div>
+              <div class="field est-only hidden addr-field" data-addr="addr_extra"><label>الرقم الإضافي</label><input type="text" id="addrExtra"></div>
+              <div class="field est-only hidden addr-field" data-addr="street"><label>الشارع</label><input type="text" id="addrStreet"></div>
+            </div>
+            <div class="addr-r">
+              <div class="field est-only hidden addr-field" data-addr="district"><label>الحي</label><input type="text" id="addrDistrict"></div>
+              <div class="field est-only hidden addr-field" data-addr="building"><label>رقم المبنى</label><input type="text" id="addrBuilding"></div>
+              <div class="field est-only hidden addr-field" data-addr="zip"><label>الرمز البريدي</label><input type="text" id="addrZip"></div>
+            </div>
+            <div class="addr-r">
+              <div class="field est-only hidden addr-field" data-addr="city"><label>المدينة</label><input type="text" id="addrCity"></div>
+              <div class="field est-only hidden addr-field" data-addr="start_date"><label>تاريخ التأسيس</label><input type="date" id="custStartDate"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field"><label>نقاط الولاء</label><input type="number" min="0" value="0" id="custPoints"></div>
+        <div class="field" style="grid-column:1/-1;"><label>ملاحظات</label><textarea id="custNotes"></textarea></div>
+      </form>
+      <div class="modal-actions">
+        <button id="custSaveBtn" class="primary">حفظ</button>
+        <button id="custCancelBtn" class="secondary">إلغاء</button>
+      </div>
+    </div>
+  </div>
+  <script src="navigation.js"></script>
+  <script src="customers.js"></script>
+  <!-- لوحة كشف حساب عميل -->
+  <div id="customerStatementPanel" class="modal-overlay" style="align-items:flex-start;padding-top:40px;">
+    <div class="modal" style="max-width:1000px;width:96%;" role="dialog" aria-modal="true" aria-labelledby="custStmtTitle">
+      <h2 id="custStmtTitle" style="margin-bottom:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <span>كشف حساب عميل</span>
+        <small id="custStmtCustomerLabel" style="font-size:14px;font-weight:700;color:#0d47a1;"></small>
+      </h2>
+      <div id="custStmtHeader" style="display:none;border:1px solid rgba(0,0,0,0.25);border-radius:16px;padding:10px 14px;margin-bottom:12px;background:linear-gradient(135deg,rgba(255,255,255,0.8),rgba(240,244,248,0.65));font-size:12.5px;font-weight:700;line-height:1.7;">
+        <!-- يملأ ديناميكياً -->
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;align-items:flex-end;">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;">
+          بحث عميل (رقم / اسم / جوال)
+          <input id="custStmtSearch" type="text" style="padding:10px 12px;border:1px solid rgba(0,0,0,0.3);border-radius:14px;min-width:240px;">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;">
+          من تاريخ
+          <input id="custStmtStart" type="date" style="padding:8px 10px;border:1px solid rgba(0,0,0,0.3);border-radius:12px;">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;">
+          إلى تاريخ
+          <input id="custStmtEnd" type="date" style="padding:8px 10px;border:1px solid rgba(0,0,0,0.3);border-radius:12px;">
+        </label>
+        <div style="display:flex;gap:10px;margin-inline-start:auto;">
+          <button id="custStmtLoad" class="primary" style="min-width:110px;">عرض</button>
+          <button id="custStmtClose" class="secondary" style="min-width:110px;">إغلاق</button>
+        </div>
+      </div>
+      <div id="custStmtSuggest" style="display:none;max-height:180px;overflow:auto;border:1px solid #0d47a1;border-radius:12px;padding:6px 8px;background:rgba(255,255,255,0.8);margin-bottom:10px;display:flex;flex-direction:column;gap:6px;"></div>
+      <div id="custStmtSummary" style="font-size:13px;font-weight:700;margin-bottom:8px;"></div>
+      <div style="max-height:55vh;overflow:auto;border:1px solid rgba(0,0,0,0.25);border-radius:16px;background:rgba(255,255,255,0.55);">
+        <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:760px;">
+          <thead>
+            <tr style="background:linear-gradient(135deg,rgba(255,255,255,0.85),rgba(240,244,248,0.7));">
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">م</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">رقم الفاتورة</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">التاريخ</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">الصافي</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">ضريبة</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">خصم</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">المدفوع</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">المتبقي</th>
+              <th style="padding:8px 10px;border:1px solid rgba(0,0,0,0.25);">الرصيد بعد</th>
+            </tr>
+          </thead>
+          <tbody id="custStmtBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- نافذة البحث الصغيرة لاختيار عميل قبل الكشف -->
+  <div id="custStmtSearchOverlay" class="modal-overlay" style="display:none;align-items:flex-start;padding-top:80px;">
+    <div class="modal" style="width:480px;max-width:94vw;padding:26px 28px;" role="dialog" aria-modal="true" aria-labelledby="custStmtSearchTitle">
+      <h3 id="custStmtSearchTitle" style="margin:0 0 14px;font-size:20px;font-weight:800;">اختيار عميل للكشف</h3>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;">
+        بحث (رقم / اسم / جوال)
+        <input id="custStmtSearchInput" type="text" autocomplete="off" style="padding:10px 12px;border:1px solid rgba(0,0,0,0.35);border-radius:14px;font-size:13px;">
+      </label>
+      <div id="custStmtSearchSuggest" style="margin-top:10px;max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:6px;border:1px solid rgba(0,0,0,0.25);border-radius:14px;padding:8px 10px;background:rgba(255,255,255,0.65);"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button type="button" id="custStmtSearchClose" class="secondary" style="min-width:110px;">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

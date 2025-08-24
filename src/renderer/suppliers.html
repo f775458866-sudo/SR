@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>إدارة الموردين</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+    body{margin:0;background:linear-gradient(135deg,#f2f6fb,#e3ecf5 50%,#d9e4ef);color:#0d2d3a;min-height:100vh;}
+    .page-shell{display:flex;flex-direction:column;min-height:100vh;}
+    header.page-header{display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:2px solid #000;background:linear-gradient(120deg,#ffffff,#f3f7fb);position:sticky;top:0;z-index:40;box-shadow:0 4px 12px -6px rgba(0,0,0,0.18);}
+    header.page-header h1{margin:0;font-size:24px;font-weight:800;}
+    .header-spacer{flex:1;}
+    button.primary,button.secondary{cursor:pointer;font-size:13px;font-weight:700;padding:9px 18px;border:2px solid #000;background:linear-gradient(135deg,#ffffff,#f3f9ff);border-radius:14px;color:#0d2d3a;transition:.25s cubic-bezier(.4,.2,.2,1);box-shadow:0 2px 4px rgba(0,0,0,0.06);}
+    button.primary:hover,button.secondary:hover{background:linear-gradient(135deg,#fff,#eaf4ff);transform:translateY(-2px);box-shadow:0 6px 14px -4px rgba(0,0,0,0.22);}
+    button.primary:active,button.secondary:active{transform:translateY(0);box-shadow:0 2px 6px -2px rgba(0,0,0,0.25);}
+    .search-bar{padding:14px 20px;border-bottom:2px solid #000;display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.55);backdrop-filter:blur(6px);position:sticky;top:70px;z-index:35;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4);}    
+    .search-wrap{position:relative;flex:1;}
+    .search-wrap input{width:100%;padding:12px 14px 12px 40px;border:2px solid #000;border-radius:16px;font-size:14px;font-weight:600;background:#fffdfd;color:#0d3244;box-shadow:0 1px 2px rgba(0,0,0,0.06);transition:.22s;}
+    .search-wrap input:focus{outline:none;box-shadow:0 0 0 3px #bcd9ff,0 1px 2px rgba(0,0,0,0.08);}
+    .search-wrap span.icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;}
+    .table-wrap{flex:1;padding:22px 24px;overflow:auto;background:linear-gradient(180deg,#f1f6fa,#eef3f7);} 
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:820px;}
+    th,td{border:2px solid #000;padding:10px 12px;font-size:13px;text-align:center;background:#fff;font-weight:600;transition:background .15s ease;}
+    th{font-size:13px;font-weight:800;background:linear-gradient(180deg,#f5f8fa,#e9eff4);text-transform:uppercase;letter-spacing:.5px;}
+    tbody tr:nth-child(even) td{background:#fafafa;}
+    tbody tr:hover td{background:#e7f2fa;}
+    .actions-btn{cursor:pointer;border:2px solid #000;background:#fff;font-size:16px;font-weight:700;line-height:1;padding:2px 10px;border-radius:10px;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,0.04);} 
+    .actions-btn:hover{background:#fff4e0;transform:translateY(-2px);} 
+    .actions-btn:active{transform:translateY(0);} 
+    /* نموذج */
+    .modal-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;display:none;align-items:center;justify-content:center;z-index:1000;background:rgba(0,0,0,0.18);backdrop-filter:blur(3px);} 
+    .modal{background:linear-gradient(145deg,#ffffff,#f5f9fc);border:2px solid #000;border-radius:28px;width:760px;max-width:96vw;max-height:90vh;overflow:auto;padding:30px 34px;box-shadow:0 18px 40px -18px rgba(0,0,0,0.28),0 4px 10px -2px rgba(0,0,0,0.12);} 
+    .modal h2{margin:0 0 18px;font-size:22px;font-weight:800;text-align:center;background:linear-gradient(90deg,#0d2d3a,#13609c);-webkit-background-clip:text;background-clip:text;color:transparent;} 
+    form.supplier-form{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px 16px;}
+    form.supplier-form .field{display:flex;flex-direction:column;gap:4px;}
+    form.supplier-form label{font-size:11px;font-weight:700;}
+    form.supplier-form input,form.supplier-form textarea{border:2px solid #000;border-radius:16px;padding:10px 14px;font-size:13px;background:#fffdfd;resize:vertical;font-weight:600;color:#123949;box-shadow:0 1px 2px rgba(0,0,0,0.06);transition:.18s;} 
+    form.supplier-form input:focus,form.supplier-form textarea:focus{outline:none;box-shadow:0 0 0 3px #bcd9ff,0 1px 2px rgba(0,0,0,0.08);} 
+    form.supplier-form textarea{min-height:80px;grid-column:span 2;}
+    .modal-actions{display:flex;gap:14px;justify-content:center;margin-top:20px;}
+    .modal-actions button{min-width:140px;}
+    .hidden{display:none !important;}
+    .error-field{background:#fff0f0 !important;box-shadow:0 0 0 3px rgba(198,40,40,0.2);} 
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:10px;height:10px;} 
+    ::-webkit-scrollbar-track{background:#e2e8ef;border-radius:8px;} 
+    ::-webkit-scrollbar-thumb{background:#97b4c7;border:2px solid #e2e8ef;border-radius:8px;} 
+    ::-webkit-scrollbar-thumb:hover{background:#6f95ac;} 
+    /* Animation */
+    .page-shell, .modal{animation:fadeSlide .45s ease;} 
+    @keyframes fadeSlide{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);} } 
+    /* Dark mode placeholder */
+    body.dark{background:#0d1c26;} body.dark header.page-header{background:#132a37;color:#fff;} body.dark th{background:#173848;color:#e9f3fa;} 
+    @media (max-width:640px){
+      .modal{padding:24px 26px;border-radius:24px;}
+      form.supplier-form{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+      form.supplier-form textarea{grid-column:1/-1;}
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="page-header">
+      <button id="backBtn" class="secondary" style="min-width:90px;">⟵ رجوع</button>
+      <h1>إدارة الموردين</h1>
+      <div class="header-spacer"></div>
+      <button id="btnAddSupplier" class="primary">➕ إضافة عنصر جديد</button>
+      <button id="btnExportSup" class="secondary">🗂 تصدير</button>
+    </header>
+    <div class="search-bar">
+      <div class="search-wrap"><input type="text" id="supSearch" placeholder="البحث في الموردين (بالاسم أو الجوال)" disabled><span class="icon">🔍</span></div>
+    </div>
+    <div class="table-wrap">
+      <table id="suppliersTable">
+        <thead>
+          <tr>
+            <th>اسم المورد</th>
+            <th>الجوال</th>
+            <th>الرقم الضريبي</th>
+            <th>واتساب</th>
+            <th>الرصيد الحالي</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="suppliersTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- نموذج -->
+  <div id="supplierModal" class="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="supplierModalTitle">
+      <h2 id="supplierModalTitle">إضافة مورد</h2>
+      <form class="supplier-form" id="supplierForm" onsubmit="return false;">
+        <div class="field"><label>اسم المورد</label><input type="text" id="supName"></div>
+        <div class="field"><label>الجوال</label><input type="text" id="supPhone"></div>
+        <div class="field"><label>الرقم الضريبي</label><input type="text" id="supVat"></div>
+        <div class="field"><label>واتساب</label><input type="text" id="supWhatsapp"></div>
+        <div class="field"><label>البريد الإلكتروني</label><input type="email" id="supEmail"></div>
+        <div class="field" style="grid-column:1/-1;"><label>العنوان</label><input type="text" id="supAddress"></div>
+        <div class="field" style="grid-column:1/-1;"><label>ملاحظات</label><textarea id="supNotes"></textarea></div>
+      </form>
+      <div class="modal-actions">
+        <button id="supSaveBtn" class="primary">حفظ</button>
+        <button id="supCancelBtn" class="secondary">إلغاء</button>
+      </div>
+    </div>
+  </div>
+  <script src="navigation.js"></script>
+  <script src="suppliers.js"></script>
+</body>
+</html>

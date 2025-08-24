@@ -1,0 +1,55 @@
+# === Node / Electron default ignores ===
+node_modules/
+.dist/
+dist/
+.tmp/
+.temp/
+.out/
+coverage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# App generated data (not source)
+exports/
+uploads/
+backup/
+
+# Local databases (runtime data). Remove this line if you WANT to version sample db.
+*.db
+*.sqlite
+*.sqlite-journal
+
+# Environment / secrets
+.env
+.env.*
+
+# Misc
+*.tgz
+*.zip
+*.bak
+*.tmp
+
+# Electron build artifacts
+release/
+build/
+
+# Generated PDFs / reports (already under exports, but keep extra pattern)
+*.pdf
+
+# Cache
+.cache/

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نقطة البيع</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none';" />
+  <link rel="stylesheet" href="../renderer/styles.css">
+  <style>
+  html,body{margin:0;padding:0;height:100%;font-family:Tahoma,Arial,sans-serif;background:linear-gradient(135deg,#e3edf5,#d5e3ef,#e9f1f8);}
+  body{display:flex;flex-direction:column;}
+  .pos-shell{position:relative;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .pos-top-bar{flex:0 0 42px;display:flex;align-items:center;gap:10px;padding:4px 10px;background:#ffffff;border-bottom:1px solid #ccc;font-size:13px;}
+  .bar-buttons{display:flex;gap:4px;}
+  .bar-btn{background:#fff;border:1px solid #c5c9cc;padding:4px 10px;cursor:pointer;font-size:13px;border-radius:4px;min-width:40px;}
+  .bar-btn:hover{background:#f0f0f0;}
+  .bar-btn.danger{background:#fff2f2;border-color:#e2b5b5;}
+  .bar-btn.danger:hover{background:#ffdcdc;}
+  .pos-title{font-weight:600;font-size:14px;margin-inline-start:auto;}
+  .invoice-header{flex:0 0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.30);backdrop-filter:blur(16px) saturate(170%);-webkit-backdrop-filter:blur(16px) saturate(170%);box-shadow:0 0 0 1px rgba(255,255,255,0.35) inset,0 4px 14px -8px rgba(0,0,0,0.25);border-top:1px solid rgba(255,255,255,0.55);}
+  .invoice-header .field{display:flex;flex-direction:column;position:relative;}
+  .invoice-header label{font-size:11px;font-weight:700;margin-bottom:4px;color:#0e2c3d;letter-spacing:.4px;text-shadow:0 1px 0 rgba(255,255,255,0.6);}
+  .invoice-header input, .invoice-header select{border:1px solid rgba(0,0,0,0.25);padding:8px 10px;font-size:13px;border-radius:11px;background:linear-gradient(145deg,rgba(255,255,255,0.65),rgba(255,255,255,0.35));box-shadow:0 2px 4px rgba(0,0,0,0.15),0 0 0 1px rgba(255,255,255,0.65) inset;outline:none;transition:.25s;backdrop-filter:blur(10px) saturate(180%);-webkit-backdrop-filter:blur(10px) saturate(180%);font-weight:600;color:#0b2f42;}
+  .invoice-header input:hover, .invoice-header select:hover{box-shadow:0 4px 10px -3px rgba(0,0,0,0.25),0 0 0 1px rgba(255,255,255,0.75) inset;}
+  .invoice-header input:focus, .invoice-header select:focus{border-color:#1976d2;box-shadow:0 0 0 1px #1976d2,0 0 0 3px rgba(25,118,210,0.35),0 4px 12px -4px rgba(25,118,210,0.45);background:linear-gradient(145deg,rgba(255,255,255,0.85),rgba(255,255,255,0.55));}
+  .invoice-header input[readonly]{background:linear-gradient(145deg,rgba(245,247,250,0.9),rgba(236,240,244,0.8));color:#415864;}
+  .invoice-header .combo{display:flex;gap:4px;}
+  .invoice-header .combo input.mini{flex:1;}
+  .items-area{flex:1 1 auto;overflow:auto;padding:0;background:rgba(255,255,255,0.25);backdrop-filter:blur(8px) saturate(160%);-webkit-backdrop-filter:blur(8px) saturate(160%);}
+  .items-table{width:100%;border-collapse:separate;border-spacing:0;min-width:860px;}
+  .items-table th,.items-table td{border:1px solid rgba(0,0,0,0.15);padding:6px 6px;font-size:12px;text-align:center;background:rgba(255,255,255,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .items-table th{background:linear-gradient(135deg,rgba(255,255,255,0.85),rgba(240,244,248,0.7));font-weight:700;color:#15374a;}
+  .items-table th:first-child{border-top-right-radius:14px;}
+  .items-table th:last-child{border-top-left-radius:14px;}
+  .items-table input{width:100%;border:1px solid rgba(0,0,0,0.25);padding:5px 4px;font-size:12px;text-align:center;border-radius:9px;box-sizing:border-box;background:linear-gradient(145deg,rgba(255,255,255,0.75),rgba(255,255,255,0.45));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-weight:600;color:#0b3144;transition:.22s;}
+  .items-table input:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 1px #1976d2,0 0 0 3px rgba(25,118,210,0.35);background:rgba(255,255,255,0.9);}
+  .items-table input[readonly]{background:linear-gradient(145deg,rgba(245,247,250,0.85),rgba(236,240,244,0.6));color:#2e4755;font-weight:500;}
+  .items-table input.name{text-align:right;}
+  .items-table input.name{text-align:right;}
+  .suggest-box{position:absolute;background:#fff;border:1px solid #c5c9ce;z-index:50;min-width:240px;max-height:220px;overflow:auto;display:none;}
+  .suggest-box button{display:block;width:100%;text-align:right;background:#fff;border:0;border-bottom:1px solid #eee;padding:4px 8px;font-size:12px;cursor:pointer;}
+  .suggest-box button:last-child{border-bottom:0;}
+  .suggest-box button:hover{background:#f1f6ff;}
+  .del-row{background:#fff;border:1px solid #d9b3b3;padding:2px 6px;cursor:pointer;border-radius:3px;}
+  .del-row:hover{background:#ffe1e1;}
+  /* ===== الشريط السفلي المبسط (صف واحد، حدود سوداء، بدون ظلال/تدرجات) ===== */
+  .pos-footer{flex:0 0 auto;display:flex;align-items:stretch;gap:10px;padding:10px 12px;border-top:1px solid rgba(0,0,0,0.15);background:linear-gradient(135deg,rgba(255,255,255,0.55),rgba(255,255,255,0.25));backdrop-filter:blur(14px) saturate(170%);-webkit-backdrop-filter:blur(14px) saturate(170%);font-size:12px;box-shadow:0 8px 24px -12px rgba(0,0,0,0.35) inset,0 2px 6px -2px rgba(0,0,0,0.15);}
+  .pos-footer .notes-wrap{display:flex;align-items:center;min-width:160px;max-width:220px;padding:6px 8px;border:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.28);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.18),0 0 0 1px rgba(255,255,255,0.4) inset;position:relative;overflow:hidden;}
+  .pos-footer .notes-wrap::before{content:"";position:absolute;inset:0;background:linear-gradient(140deg,rgba(255,255,255,0.55),rgba(255,255,255,0.05));pointer-events:none;mix-blend-mode:overlay;}
+  .pos-footer .notes-wrap label{display:none;}
+  .pos-footer #notes{flex:1;resize:none;border:0;padding:0 6px;font-size:14px;line-height:1.2;font-family:inherit;outline:none;height:28px;background:transparent;color:#102027;font-weight:600;letter-spacing:.4px;}
+  .pos-footer #notes::placeholder{color:#4d5b63;opacity:.55;}
+  .pos-footer #notes:focus{background:rgba(255,255,255,0.18);border-radius:8px;}
+  .totals-row{flex:1;display:flex;align-items:stretch;gap:10px;}
+  .totals-row .f{--accent:rgba(0,0,0,0.18);position:relative;display:flex;flex-direction:column;justify-content:space-between;min-width:128px;padding:6px 8px 8px;border:1px solid rgba(255,255,255,0.35);background:linear-gradient(145deg,rgba(255,255,255,0.42),rgba(255,255,255,0.18));border-radius:16px;box-sizing:border-box;box-shadow:0 1px 4px rgba(0,0,0,0.22),0 0 0 1px rgba(255,255,255,0.4) inset;overflow:hidden;backdrop-filter:blur(10px) saturate(180%);-webkit-backdrop-filter:blur(10px) saturate(180%);}
+  .totals-row .f::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),transparent 95%);}
+  .totals-row .f[data-role="before"]{--accent:#6d4c41;}
+  .totals-row .f[data-role="discount"]{--accent:#d81b60;}
+  .totals-row .f[data-role="vat"]{--accent:#ff9800;}
+  .totals-row .f[data-role="net"]{--accent:#1565c0;}
+  .totals-row .f[data-role="paid"]{--accent:#2e7d32;}
+  .totals-row .f[data-role="remain"]{--accent:#8e24aa;}
+  .totals-row .f label{font-size:11px;font-weight:700;margin:0 0 4px;text-align:center;letter-spacing:.3px;color:#102a36;text-shadow:0 1px 1px rgba(255,255,255,0.6);}
+  .totals-row .f .v{flex:1;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;letter-spacing:.6px;color:#0b2f3f;text-shadow:0 1px 2px rgba(255,255,255,0.7),0 0 4px rgba(255,255,255,0.35);}
+  .totals-row .f input{flex:1;border:0;padding:0 4px;font-size:16px;font-weight:700;text-align:center;background:rgba(255,255,255,0.35);border-radius:10px;color:#0b2f3f;box-shadow:0 1px 2px rgba(0,0,0,0.25) inset,0 0 0 1px rgba(255,255,255,0.5);transition:background .25s, box-shadow .25s;}
+  .totals-row .f input:focus{background:rgba(255,255,255,0.55);outline:none;box-shadow:0 1px 3px rgba(0,0,0,0.3) inset,0 0 0 1px rgba(255,255,255,0.65),0 0 0 2px rgba(21,101,192,0.35);}
+  .totals-row .f.paid{min-width:150px;}
+  .footer-print-btn{align-self:stretch;display:flex;flex-direction:column;justify-content:center;font-size:13px;font-weight:700;padding:0 18px;cursor:pointer;background:linear-gradient(160deg,rgba(33,150,243,0.65),rgba(13,71,161,0.55));color:#fff;border:1px solid rgba(255,255,255,0.45);border-radius:18px;min-width:150px;box-shadow:0 2px 6px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.35) inset;backdrop-filter:blur(10px) saturate(180%);transition:transform .18s, box-shadow .25s;}
+  .footer-print-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px -6px rgba(0,0,0,0.45),0 0 0 1px rgba(255,255,255,0.55) inset;}
+  .footer-print-btn:active{transform:translateY(0);box-shadow:0 2px 6px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.55) inset;}
+  @media (max-width:1000px){
+    .pos-footer{flex-direction:column;}
+    .totals-row{flex-wrap:wrap;}
+    .footer-print-btn{height:42px;}
+    .pos-footer .notes-wrap{max-width:100%;min-width:100%;}
+  }
+  @media (max-width:600px){ .invoice-header{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));} .items-table{min-width:640px;} }
+
+  /* ===== Payment Modal New Design ===== */
+  .pay-modal-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center,rgba(255,255,255,0.85),rgba(240,244,248,0.6));backdrop-filter:blur(6px) saturate(140%);-webkit-backdrop-filter:blur(6px) saturate(140%);z-index:1000;padding:12px;}
+  .pay-modal{width:420px;max-width:96vw;border:2px solid #0d1b26;border-radius:20px;background:linear-gradient(160deg,#ffffff 0%,#f3f6f9 55%,#edf4fa 100%);box-shadow:0 8px 28px -8px rgba(0,34,62,0.45),0 4px 12px -2px rgba(0,34,62,0.25),0 0 0 4px #fff inset;display:flex;flex-direction:column;position:relative;font-family:Tahoma,Arial,sans-serif;animation:popIn .35s cubic-bezier(.4,.8,.3,1);}
+  @keyframes popIn{0%{transform:translateY(18px) scale(.92);opacity:0;}60%{transform:translateY(-4px) scale(1.02);}100%{transform:translateY(0) scale(1);opacity:1;}}
+  .pay-modal-header{padding:14px 18px 6px 18px;display:flex;align-items:center;justify-content:space-between;}
+  .pay-modal-header .title-wrap{display:flex;align-items:center;gap:10px;}
+  .pay-modal-header .title{font-size:22px;font-weight:800;letter-spacing:.5px;background:linear-gradient(90deg,#0d3c61,#1565c0);-webkit-background-clip:text;color:transparent;}
+  .shortcut-chip{font-size:11px;font-weight:600;padding:4px 8px;border:1px solid rgba(0,0,0,0.15);background:linear-gradient(135deg,#fff,#e8f2ff);border-radius:20px;color:#133040;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+  .shortcut-chip.alt{background:linear-gradient(135deg,#fff,#ffe9e9);}
+  .pay-methods{display:flex;gap:14px;padding:10px 18px 4px 18px;}
+  .pay-method{flex:1;position:relative;background:#fff;border:2px solid #b9c6d1;border-radius:16px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:14px;font-weight:700;color:#0d2d40;transition:.28s;border-image:linear-gradient(135deg,#b4c3d1,#d2dee7) 1;box-shadow:0 2px 4px rgba(13,45,64,.18),0 0 0 1px rgba(255,255,255,.65) inset;}
+  .pay-method .icon{font-size:30px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));}
+  .pay-method kbd{position:absolute;top:6px;left:8px;font-size:10px;font-weight:700;padding:2px 6px;border:1px solid rgba(0,0,0,.15);background:linear-gradient(135deg,#fff,#f3f8fc);border-radius:10px;box-shadow:0 1px 1px rgba(0,0,0,.2);letter-spacing:.5px;}
+  .pay-method:hover{background:linear-gradient(160deg,#ffffff,#eef7ff);box-shadow:0 4px 10px -2px rgba(0,53,97,.3),0 0 0 1px rgba(21,101,192,.4) inset;}
+  .pay-method.active{background:linear-gradient(155deg,#e3f3ff,#d4ecff);border-color:#1976d2;box-shadow:0 0 0 2px rgba(25,118,210,.35),0 4px 12px -4px rgba(25,118,210,.55);}
+  .pay-summary{padding:4px 20px 10px 20px;display:flex;flex-direction:column;gap:6px;}
+  .pay-summary .row{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:600;color:#123040;padding:4px 0;border-bottom:1px dashed rgba(0,0,0,0.08);}
+  .pay-summary .row:last-child{border-bottom:0;}
+  .pay-summary .row.net{font-size:16px;font-weight:800;color:#0d3c61;}
+  .pay-inputs{display:grid;grid-template-columns:70px 1fr 70px 90px;align-items:center;gap:10px;padding:4px 20px 4px 20px;margin-top:4px;}
+  .pay-inputs label{font-size:13px;font-weight:700;color:#0d2d40;}
+  .pay-inputs input{height:42px;border:2px solid #b7c5d1;border-radius:14px;padding:0 14px;font-size:18px;font-weight:800;text-align:center;letter-spacing:.5px;background:linear-gradient(120deg,#fff,#f3f7fa);color:#0d2d40;box-shadow:0 1px 2px rgba(0,0,0,.15),0 0 0 1px rgba(255,255,255,.7) inset;transition:.25s;}
+  .pay-inputs input:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 1px rgba(25,118,210,.55) inset,0 0 0 3px rgba(25,118,210,.25);background:#fff;}
+  .pay-inputs input[readonly]{background:#f1f5f8;color:#1a4559;font-weight:700;}
+  .pay-msg{min-height:20px;text-align:center;font-size:13px;font-weight:600;color:#b00020;padding:4px 12px;}
+  .pay-actions{display:flex;gap:14px;padding:2px 20px 14px 20px;margin-top:4px;}
+  .pay-btn{flex:1;border:0;border-radius:16px;padding:14px 4px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:6px;position:relative;transition:.28s;background:linear-gradient(145deg,#ffffff,#eef4f8);color:#0d2d40;box-shadow:0 4px 10px -3px rgba(0,0,0,.35),0 2px 4px -1px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.9) inset;}
+  .pay-btn.primary{background:linear-gradient(150deg,#1976d2,#0d47a1);color:#fff;box-shadow:0 5px 14px -4px rgba(0,85,160,.55),0 0 0 1px rgba(255,255,255,.25) inset;}
+  .pay-btn.accent{background:linear-gradient(150deg,#2e7d32,#1b5e20);color:#fff;box-shadow:0 5px 14px -4px rgba(23,128,40,.55),0 0 0 1px rgba(255,255,255,.25) inset;}
+  .pay-btn.cancel{background:linear-gradient(150deg,#ffffff,#f1f4f7);color:#2b3e4b;border:1px solid #c2cfd7;box-shadow:0 4px 10px -3px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.9) inset;}
+  .pay-btn.cancel:hover{box-shadow:0 10px 20px -8px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.95) inset;background:linear-gradient(145deg,#ffffff,#ecf2f6);} 
+  .pay-btn:hover{transform:translateY(-2px);box-shadow:0 10px 22px -8px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.95) inset;}
+  .pay-btn:active{transform:translateY(0);box-shadow:0 4px 10px -3px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.75) inset;}
+  .pay-btn.primary:hover{box-shadow:0 10px 24px -8px rgba(25,118,210,.65),0 0 0 1px rgba(255,255,255,.4) inset;}
+  .pay-btn.accent:hover{box-shadow:0 10px 24px -8px rgba(46,125,50,.65),0 0 0 1px rgba(255,255,255,.4) inset;}
+  .pay-btn .hint-key{font-size:11px;font-weight:600;padding:4px 7px;border-radius:10px;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,.45);box-shadow:0 1px 1px rgba(0,0,0,.35);}
+  .pay-legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:8px 16px 16px 16px;font-size:11px;font-weight:600;color:#335268;letter-spacing:.4px;}
+  .pay-legend span{background:#f1f6fa;padding:4px 10px;border-radius:14px;border:1px solid #d3dde4;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+  @media (max-width:520px){
+    .pay-modal{width:100%;padding-bottom:8px;border-radius:24px;}
+    .pay-methods{flex-wrap:wrap;}
+    .pay-method{flex:1 1 calc(33% - 10px);min-width:90px;}
+    .pay-inputs{grid-template-columns:1fr 1fr;}
+    .pay-inputs label{display:block;text-align:center;}
+  }
+  /* End Payment Modal */
+  </style>
+</head>
+<body class="dashboard-mode">
+  <div class="center-brand-overlay">
+  <div class="brand-name-big">Asas POS</div>
+  <div class="copyright-line">© 2025 Asas Solutions. All Rights Reserved.</div>
+  </div>
+    <!-- نافذة البحث عن منتج (F5) -->
+    <div id="productSearchModal" style="display:none;position:fixed;z-index:2000;top:0;left:0;width:100vw;height:100vh;align-items:center;justify-content:center;">
+      <div style="background:rgba(255,255,255,0.75);backdrop-filter:blur(14px) saturate(170%);-webkit-backdrop-filter:blur(14px) saturate(170%);border:2px solid #111;border-radius:18px;min-width:340px;max-width:96vw;padding:22px 18px 16px 18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:20px;font-weight:700;margin-bottom:12px;letter-spacing:.5px;">ابحث عن منتج</div>
+        <input id="modalProductSearchInput" type="text" placeholder="الاسم أو الباركود" style="width:100%;font-size:15px;padding:8px 12px;margin-bottom:10px;border:2px solid #1976d2;border-radius:8px;outline:none;">
+        <div id="modalProductResults" style="width:100%;max-height:260px;overflow:auto;border-radius:8px;background:rgba(255,255,255,0.55);border:1px solid #e3eaf2;"></div>
+      </div>
+    </div>
+    <!-- شاشة الدفع المنبثقة (تصميم مُحسّن) -->
+    <div id="payModal" class="pay-modal-overlay" style="display:none;">
+      <div class="pay-modal" role="dialog" aria-modal="true" aria-labelledby="payModalTitle">
+        <div class="pay-modal-header">
+          <div class="title-wrap">
+            <span id="payModalTitle" class="title">الدفع</span>
+            <span class="shortcut-chip">F2 دفع كامل</span>
+            <span class="shortcut-chip alt">Esc إغلاق</span>
+          </div>
+        </div>
+        <div class="pay-methods" id="payMethods">
+          <button type="button" class="pay-method" data-method="cash"><span class="icon">💵</span><span class="lbl">نقدًا</span><kbd>1</kbd></button>
+          <button type="button" class="pay-method" data-method="card"><span class="icon">💳</span><span class="lbl">شبكية</span><kbd>2</kbd></button>
+          <button type="button" class="pay-method" data-method="credit"><span class="icon">🕒</span><span class="lbl">آجل</span><kbd>3</kbd></button>
+        </div>
+        <div class="pay-summary">
+          <div class="row"><span>الإجمالي قبل الضريبة</span><span id="payBeforeVat">0.00</span></div>
+          <div class="row"><span>الخصم</span><span id="payDiscount">0.00</span></div>
+          <div class="row"><span>الضريبة (15%)</span><span id="payVat">0.00</span></div>
+          <div class="row net"><span>الصافي</span><span id="payNet">0.00</span></div>
+        </div>
+        <div class="pay-inputs">
+          <label>المسدد</label>
+          <input id="payPaid" type="number" min="0" step="0.01" autocomplete="off">
+          <label>المتبقي</label>
+          <input id="payRemain" type="text" readonly>
+        </div>
+        <div id="payMsg" class="pay-msg"></div>
+        <div class="pay-actions">
+          <button id="payCancelBtn" class="pay-btn cancel">إلغاء <span class="hint-key">Esc</span></button>
+          <button id="paySaveBtn" class="pay-btn primary">حفظ <span class="hint-key">Enter</span></button>
+          <button id="paySavePrintBtn" class="pay-btn accent">حفظ + طباعة <span class="hint-key">Ctrl+P</span></button>
+        </div>
+        <div class="pay-legend">
+          <span>F2 = دفع كامل و طباعة</span>
+          <span>Esc = إلغاء</span>
+          <span>1/2/3 = تغيير وسيلة الدفع</span>
+        </div>
+      </div>
+    </div>
+  <div class="pos-shell" id="posRoot">
+    <!-- الشريط العلوي -->
+    <div class="pos-top-bar">
+      <div class="bar-buttons">
+  <button class="bar-btn" id="backBtn" title="رجوع">⟵</button>
+        <button class="bar-btn" id="btnNew" title="فاتورة جديدة">＋</button>
+        <button class="bar-btn" id="btnSave" title="حفظ">💾</button>
+        <button class="bar-btn" id="btnPrint" title="طباعة">🖨</button>
+        <button class="bar-btn" id="btnSearchInv" title="بحث عن فاتورة">🔍</button>
+        <button class="bar-btn danger" id="btnClose" title="إغلاق">❌</button>
+      </div>
+      <div class="pos-title">نقطة البيع</div>
+    </div>
+    <!-- رأس الفاتورة -->
+    <div class="invoice-header">
+      <div class="field" style="display:flex;align-items:end;justify-content:center;min-width:120px;">
+        <button id="openProductSearchBtn" type="button" style="width:100%;padding:10px 0;font-size:15px;font-weight:700;border-radius:13px;background:linear-gradient(135deg,rgba(33,150,243,0.22),rgba(13,71,161,0.18));border:2px solid #1976d2;color:#1976d2;backdrop-filter:blur(8px) saturate(170%);-webkit-backdrop-filter:blur(8px) saturate(170%);box-shadow:none;outline:none;cursor:pointer;transition:.18s;">🔍 بحث عن منتج (F5)</button>
+      </div>
+      <div class="field"><label>رقم الفاتورة</label><input id="invoiceNo" type="text" readonly></div>
+  <div class="field"><label>اختر عميل</label><select id="customerSelect"></select></div>
+  <div class="field"><label>اسم العميل</label><input id="customerName" type="text"></div>
+      <div class="field"><label>الرقم الضريبي للعميل</label><input id="customerVatNo" type="text" placeholder="اختياري"></div>
+      <div class="field"><label>المخزن</label><input id="storeName" type="text" value="المخزن الرئيسي" readonly></div>
+      <div class="field"><label>تاريخ</label><input id="invoiceDate" type="date" style="direction:ltr;text-align:center;"></div>
+    </div>
+    <!-- جدول المنتجات -->
+    <div class="items-area">
+      <table class="items-table" id="itemsTable">
+        <thead>
+          <tr>
+            <th style="width:42px;">❌</th>
+            <th>اسم الصنف</th>
+            <th>الكمية</th>
+            <th>السعر قبل الضريبة</th>
+            <th>السعر (شامل)</th>
+            <th>الضريبة</th>
+            <th>إجمالي شامل الضريبة</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <!-- الشريط السفلي -->
+    <div class="pos-footer">
+      <div class="notes-wrap">
+        <textarea id="notes" placeholder="ملاحظات"></textarea>
+      </div>
+      <div class="totals-row">
+        <div class="f" data-role="before"><label>قبل الضريبة</label><div class="v" id="tBeforeVat">0.00</div></div>
+  <div class="f" data-role="discount"><label>الخصم</label><input id="invoiceDiscount" type="number" min="0" step="0.01" value="0"></div>
+        <div class="f" data-role="vat"><label>الضريبة (15%)</label><div class="v" id="tVat">0.00</div></div>
+        <div class="f" data-role="net"><label>الصافي</label><div class="v" id="tNet">0.00</div></div>
+        <div class="f paid" data-role="paid"><label>المسدد</label><input id="paidAmount" type="number" min="0" step="0.01" value="0"></div>
+        <div class="f" data-role="remain"><label>المتبقي</label><div class="v" id="tRemain">0.00</div></div>
+        <button id="btnSavePrint" class="footer-print-btn">حفظ وطباعة (F2)</button>
+      </div>
+    </div>
+  </div>
+  <script src="navigation.js"></script>
+  <script src="../renderer/pos.js"></script>
+</body>
+</html>

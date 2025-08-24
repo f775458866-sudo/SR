@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المنتجات</title>
+  <link rel="stylesheet" href="../renderer/styles.css">
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+    html,body{margin:0;padding:0;min-height:100%;background:linear-gradient(135deg,#f2f6fb,#e3ecf5 50%,#d9e4ef);color:#0d2d3a;}
+    .products-shell{display:flex;flex-direction:column;min-height:100vh;}
+    header.products-header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:2px solid #000;background:linear-gradient(120deg,#ffffff,#f3f7fb);position:sticky;top:0;z-index:60;box-shadow:0 4px 12px -6px rgba(0,0,0,0.18);} 
+    header.products-header h1{margin:0;font-size:22px;font-weight:800;}
+    .header-spacer{flex:1;}
+    button.btn, .icon-add-btn{cursor:pointer;font-size:13px;font-weight:700;padding:9px 18px;border:2px solid #000;background:linear-gradient(135deg,#ffffff,#f3f9ff);border-radius:14px;transition:.25s cubic-bezier(.4,.2,.2,1);box-shadow:0 2px 4px rgba(0,0,0,0.06);} 
+    button.btn:hover, .icon-add-btn:hover{background:linear-gradient(135deg,#fff,#eaf4ff);transform:translateY(-2px);box-shadow:0 6px 14px -4px rgba(0,0,0,0.22);} 
+    button.btn:active, .icon-add-btn:active{transform:translateY(0);box-shadow:0 2px 6px -2px rgba(0,0,0,0.25);} 
+    .icon-add-btn{display:flex;align-items:center;gap:6px;position:relative;}
+    .icon-add-btn .icon-symbol{font-size:18px;}
+    .icon-add-btn .kbd-badge{background:#0d63c7;color:#fff;font-size:11px;font-weight:800;padding:2px 6px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,0.25);} 
+    @media (max-width:620px){.icon-add-btn{padding:9px 14px;}.icon-add-btn .icon-label{display:none;}}
+    .search-bar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:2px solid #000;background:rgba(255,255,255,0.55);backdrop-filter:blur(6px);position:sticky;top:72px;z-index:55;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4);} 
+    .search-bar input{flex:1;border:2px solid #000;border-radius:16px;padding:10px 14px;font-size:14px;font-weight:600;background:#fffdfd;box-shadow:0 1px 2px rgba(0,0,0,0.06);} 
+    .search-bar input:focus{outline:none;box-shadow:0 0 0 3px #bcd9ff,0 1px 2px rgba(0,0,0,0.08);} 
+    .table-wrap{flex:1;padding:22px 24px;overflow:auto;background:linear-gradient(180deg,#f1f6fa,#eef3f7);} 
+    table.products-table{width:100%;border-collapse:separate;border-spacing:0;min-width:1060px;} 
+    .products-table th,.products-table td{border:2px solid #000;padding:8px 10px;font-size:12px;text-align:center;background:#fff;font-weight:600;transition:background .15s ease;} 
+    .products-table th:first-child,.products-table td:first-child{text-align:right;}
+    .products-table th{background:linear-gradient(180deg,#f5f8fa,#e9eff4);font-weight:800;letter-spacing:.5px;} 
+    .products-table tbody tr:nth-child(even) td{background:#fafafa;} 
+    .products-table tbody tr:hover td{background:#e7f2fa;} 
+    /* رسائل حفظ أعلى */
+    #saveMsg{font-size:12px;font-weight:700;color:#0a7d00;min-width:140px;text-align:center;}
+  /* أزيل صندوق المنتجات الحديثة */
+    /* تحسين زر الرجوع */
+    #backBtn{min-width:90px;}
+    /* تراكب نموذج المنتج (موجود سابقاً) يعلو التصميم الجديد */
+    .product-form-wrapper.modal-mode{z-index:500;}
+    /* شريط تمرير */
+    ::-webkit-scrollbar{width:10px;height:10px;}::-webkit-scrollbar-track{background:#e2e8ef;border-radius:8px;}::-webkit-scrollbar-thumb{background:#97b4c7;border:2px solid #e2e8ef;border-radius:8px;}::-webkit-scrollbar-thumb:hover{background:#6f95ac;}
+    /* حركة دخول */
+    .products-shell{animation:fadeSlide .45s ease;}@keyframes fadeSlide{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  </style>
+</head>
+<body>
+  <div class="products-shell">
+    <header class="products-header">
+  <button id="backBtn" class="btn">⟵ رجوع</button>
+  <h1>المنتجات</h1>
+      <div class="header-spacer"></div>
+      <span id="saveMsg" style="display:none;">&nbsp;</span>
+      <button class="icon-add-btn" id="addProductBtn" title="إضافة منتج (F5)">
+        <span class="icon-symbol">＋</span>
+        <span class="icon-label">منتج</span>
+        <span class="kbd-badge">F5</span>
+      </button>
+    </header>
+    <div class="search-bar">
+      <input type="text" id="searchBox" placeholder="بحث في المنتجات (اسم / باركود / موديل)">
+    </div>
+  <div class="table-wrap">
+      <table class="products-table" id="productsTable">
+        <thead>
+          <tr>
+            <th>اسم المنتج</th>
+            <th>باركود</th>
+            <th>SKU</th>
+            <th>سعر الشراء</th>
+            <th>سعر البيع</th>
+            <th>هامش %</th>
+            <th>المجموعة</th>
+            <th>الوحدة</th>
+            <th>الصنف</th>
+            <th>المخزون</th>
+            <th>الصورة</th>
+            <th>نشط</th>
+            <th>حركات</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="productFormPanel" class="product-form-wrapper" style="display:none;">
+    <div class="product-card product-modal">
+      <div class="product-form-header">
+        <div class="title-side">
+          <h3 class="product-form-title">إضافة / تعديل منتج</h3>
+          <span class="hint-badge" id="formModeBadge">جديد</span>
+        </div>
+        <div class="actions-side">
+          <button class="top-action-btn" id="saveProductTopBtn" style="display:none;">حفظ</button>
+          <button class="top-action-btn cancel" id="cancelTopBtn" style="display:none;">إلغاء</button>
+          <button type="button" class="close-form-btn" id="closeFormBtn" title="إغلاق">×</button>
+        </div>
+      </div>
+      <form id="productForm" enctype="multipart/form-data" class="product-form-body unified">
+        <div class="unified-grid orderly-grid">
+          <!-- صف 1 -->
+          <div class="pg-cell required col-span-2"><label>اسم المنتج</label><input type="text" id="f_name"><div class="err" data-err="name"></div></div>
+          <div class="pg-cell required"><label>الباركود</label>
+            <div class="barcode-mode compact">
+              <label><input type="radio" name="barcode_mode" value="auto" checked> تلقائي</label>
+              <label><input type="radio" name="barcode_mode" value="manual"> يدوي</label>
+              <button type="button" id="regenBarcodeBtn" class="regen-btn" title="توليد جديد">↻</button>
+            </div>
+            <input type="text" id="f_barcode" placeholder="توليد" readonly>
+            <div class="err" data-err="barcode"></div>
+          </div>
+          <div class="pg-cell required xxs"><label>الكمية</label><input type="number" id="f_qty" min="0" value="0"><div class="err" data-err="qty"></div></div>
+          <div class="pg-cell"><label>SKU داخلي</label><input type="text" id="f_sku"><div class="err" data-err="sku"></div></div>
+          <div class="pg-cell"><label>العلامة التجارية</label><input type="text" id="f_brand"><div class="err" data-err="brand"></div></div>
+          <!-- صف 2 -->
+          <div class="pg-cell"><label>رقم الموديل</label><input type="text" id="f_model"><div class="err" data-err="model"></div></div>
+          <div class="pg-cell required"><label>سعر الشراء</label><input type="number" id="f_purchase" step="0.01" min="0"><div class="err" data-err="purchase"></div></div>
+          <div class="pg-cell required"><label>سعر البيع</label><input type="number" id="f_sale" step="0.01" min="0"><div class="err" data-err="sale"></div></div>
+          <div class="pg-cell"><label>سعر التخفيض</label><input type="number" id="f_discount_price" step="0.01" min="0"><div class="err" data-err="discount_price"></div></div>
+          <!-- صف 3 -->
+          <div class="pg-cell"><label>بدء العرض</label><input type="date" id="f_discount_start"><div class="err" data-err="discount_start"></div></div>
+          <div class="pg-cell"><label>انتهاء العرض</label><input type="date" id="f_discount_end"><div class="err" data-err="discount_end"></div></div>
+          <div class="pg-cell xxs"><label>حد الطلب</label><input type="number" id="f_low_stock" min="0" value="0"><div class="err" data-err="low_stock"></div></div>
+          <div class="pg-cell required"><label>المخزن</label><select id="f_store" class="select"></select><div class="err" data-err="store"></div></div>
+          <!-- صف 4 -->
+          <div class="pg-cell required"><label>المجموعة</label><div class="inline-flex"><select id="f_group" class="select"></select><button type="button" class="mini-add-btn" data-add="group">+</button></div><div class="err" data-err="group"></div></div>
+          <div class="pg-cell required"><label>الوحدة</label><div class="inline-flex"><select id="f_unit" class="select"></select><button type="button" class="mini-add-btn" data-add="unit">+</button></div><div class="err" data-err="unit"></div></div>
+          <div class="pg-cell required"><label>الصنف</label><div class="inline-flex"><select id="f_category" class="select"></select><button type="button" class="mini-add-btn" data-add="category">+</button></div><div class="err" data-err="category"></div></div>
+          <div class="pg-cell col-span-1 filler"></div>
+          <!-- صف 5 -->
+          <div class="pg-cell"><label>كمية إعادة الطلب</label><input type="number" id="f_reorder_qty" min="0"><div class="err" data-err="reorder_qty"></div></div>
+          <div class="pg-cell"><label>أقصى مخزون</label><input type="number" id="f_max_stock" min="0"><div class="err" data-err="max_stock"></div></div>
+          <div class="pg-cell"><label>متوسط التكلفة</label><input type="number" id="f_average_cost" step="0.01" min="0"><div class="err" data-err="average_cost"></div></div>
+          <div class="pg-cell"><label>آخر تكلفة</label><input type="number" id="f_last_cost" step="0.01" min="0"><div class="err" data-err="last_cost"></div></div>
+          <div class="pg-cell"><label>هامش %</label><input type="number" id="f_margin_percent" step="0.01" min="0"><div class="err" data-err="margin_percent"></div></div>
+          <div class="pg-cell"><label>سعر مستوى 2</label><input type="number" id="f_price_level2" step="0.01" min="0"><div class="err" data-err="price_level2"></div></div>
+          <div class="pg-cell"><label>سعر مستوى 3</label><input type="number" id="f_price_level3" step="0.01" min="0"><div class="err" data-err="price_level3"></div></div>
+          <div class="pg-cell"><label>ضريبة %</label><input type="number" id="f_vat_rate" step="0.01" min="0"><div class="err" data-err="vat_rate"></div></div>
+          <div class="pg-cell"><label>سماح بالسالب</label><select id="f_allow_negative"><option value="0">لا</option><option value="1">نعم</option></select><div class="err" data-err="allow_negative"></div></div>
+          <div class="pg-cell"><label>نشط</label><select id="f_active"><option value="1">نعم</option><option value="0">لا</option></select><div class="err" data-err="active"></div></div>
+          <div class="pg-cell col-span-2"><label>ملاحظات فنية</label><textarea id="f_notes" class="notes-area"></textarea><div class="err" data-err="notes"></div></div>
+          <div class="pg-cell"><label>صورة المنتج</label><input type="file" id="f_image" accept="image/*" class="file-input"><div class="image-preview" id="imagePreview"></div><div class="err" data-err="image"></div></div>
+          <div class="pg-cell col-span-1 filler"></div>
+        </div>
+        <div class="form-actions-bottom">
+          <button type="submit" class="primary-save-btn">حفظ المنتج</button>
+          <button type="button" class="secondary-cancel-btn" id="cancelBottomBtn">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="miniLookupPanel">
+    <div class="inner">
+      <h4 id="miniLookupTitle">إضافة</h4>
+      <input type="text" id="miniLookupInput" placeholder="الاسم" />
+      <div class="err" data-err="mini"></div>
+      <div class="actions">
+        <button type="button" class="btn" id="miniLookupSave">حفظ</button>
+        <button type="button" class="btn btn-secondary" id="miniLookupCancel">إلغاء</button>
+      </div>
+    </div>
+  </div>
+  <script src="navigation.js"></script>
+  <script src="../renderer/products.js"></script>
+  <!-- نافذة حركات المخزون -->
+  <div id="stockMovModal" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.28);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+    <div style="background:#fff;border:2px solid #000;border-radius:24px;width:760px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:2px solid #000;background:linear-gradient(120deg,#ffffff,#f3f7fb);">
+        <h3 style="margin:0;font-size:18px;font-weight:800;color:#0d4d92;flex:1;">حركات المخزون</h3>
+        <button id="closeStockMov" style="cursor:pointer;border:2px solid #000;background:#fff;border-radius:14px;padding:6px 14px;font-weight:700;">إغلاق</button>
+      </div>
+      <div style="padding:10px 14px;overflow:auto;flex:1;">
+        <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:600px;font-size:12.5px;">
+          <thead><tr><th style="border:2px solid #000;padding:6px;background:#f0f4f7;">#</th><th style="border:2px solid #000;padding:6px;background:#f0f4f7;">التغير</th><th style="border:2px solid #000;padding:6px;background:#f0f4f7;">السبب</th><th style="border:2px solid #000;padding:6px;background:#f0f4f7;">مرجع</th><th style="border:2px solid #000;padding:6px;background:#f0f4f7;">التاريخ</th></tr></thead>
+          <tbody id="stockMovTbody"></tbody>
+        </table>
+      </div>
+      <div style="padding:8px 14px;font-size:11.5px;border-top:2px solid #000;background:#fff;display:flex;gap:10px;align-items:center;">
+        <span id="stockMovMeta" style="font-weight:600;color:#24445f;">&nbsp;</span>
+        <div style="flex:1"></div>
+        <button id="stockMovReload" style="cursor:pointer;border:2px solid #000;background:#fff;border-radius:14px;padding:6px 14px;font-weight:700;">تحديث</button>
+      </div>
+    </div>
+  </div>
+  <style>
+    /* أنماط البطاقة الجديدة للمنتج */
+  .product-form-wrapper{margin:10px 0 16px;animation:fadeInUp .45s ease;}
+  /* وضع النافذة المنبثقة */
+  .product-form-wrapper.modal-mode{position:fixed;inset:0;background:rgba(10,30,50,0.38);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex !important;align-items:center;justify-content:center;padding:22px 12px;z-index:250;overflow:auto;}
+    @keyframes fadeInUp{0%{opacity:0;transform:translateY(12px);}100%{opacity:1;transform:translateY(0);}}
+  .product-card{position:relative;background:linear-gradient(140deg,rgba(255,255,255,0.82),rgba(240,246,252,0.62));border:1px solid rgba(13,77,146,0.25);backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);border-radius:20px;padding:10px 16px 16px;box-shadow:0 12px 30px -12px rgba(0,0,0,0.30),0 5px 14px -8px rgba(0,0,0,0.18),inset 0 0 0 1px rgba(255,255,255,0.5);}    
+  .product-card.product-modal{max-width:800px;width:100%;z-index:400;position:relative;max-height:88vh;overflow:auto;}
+  .close-form-btn{z-index:410;position:relative;}
+  .product-form-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(13,77,146,0.12);} 
+  .product-form-title{margin:0;font-size:17px;font-weight:800;letter-spacing:.5px;color:#0d4d92;}
+  .hint-badge{background:#0d4d92;color:#fff;padding:3px 8px;border-radius:14px;font-size:10px;font-weight:700;box-shadow:0 3px 8px rgba(13,77,146,0.30);} 
+    .actions-side{display:flex;align-items:center;gap:10px;}
+  .top-action-btn{background:#0d63c7;color:#fff;border:1px solid #0a4f9e;font-weight:600;font-size:12px;padding:6px 14px;border-radius:12px;cursor:pointer;box-shadow:0 4px 12px -4px rgba(13,77,146,0.38);transition:.22s;}
+    .top-action-btn.cancel{background:#707b85;border-color:#5c6670;}
+    .top-action-btn:hover{transform:translateY(-2px);}
+    .close-form-btn{background:#ff5a5a;color:#fff;border:none;font-size:20px;line-height:1;width:42px;height:42px;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 6px 18px -6px rgba(255,90,90,0.55);transition:.22s;}
+    .close-form-btn:hover{background:#e64848;transform:translateY(-2px) rotate(6deg);} 
+  /* الشبكة الموحدة */
+  .unified-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:8px 10px;align-items:start;}
+  @media (max-width:1000px){.unified-grid{grid-template-columns:repeat(3,minmax(150px,1fr));}}
+  @media (max-width:760px){.unified-grid{grid-template-columns:repeat(2,minmax(140px,1fr));}}
+  @media (max-width:520px){.unified-grid{grid-template-columns:repeat(1,minmax(0,1fr));}}
+  .orderly-grid .col-span-2{grid-column:span 2;}
+  .orderly-grid .col-span-1{grid-column:span 1;}
+  .orderly-grid .col-span-3{grid-column:span 3;}
+  .orderly-grid .col-span-4{grid-column:span 4;}
+  .orderly-grid .filler{pointer-events:none;visibility:hidden;}
+  .unified-grid .grid-heading{font-size:13px;font-weight:800;letter-spacing:.5px;color:#0d4d92;background:linear-gradient(90deg,rgba(13,77,146,0.12),rgba(13,77,146,0));padding:6px 12px;border-radius:14px;box-shadow:0 2px 4px rgba(0,0,0,0.08),inset 0 0 0 1px rgba(255,255,255,0.6);}
+  .span-all{grid-column:1 / -1;}    
+  .product-grid{display:grid;gap:12px 14px;}
+    .product-grid.cols-4{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));}
+    .product-grid.cols-5{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+    .product-grid.cols-6{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+    @media (max-width:850px){.product-grid.cols-5{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}.product-grid.cols-4{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}}
+    .pg-cell{display:flex;flex-direction:column;position:relative;}
+  .pg-cell label{font-size:11px;font-weight:700;margin-bottom:3px;color:#24445f;}
+    .pg-cell.required label:after{content:' *';color:#c70000;}
+  .pg-cell input[type=text],.pg-cell input[type=number],.pg-cell input[type=date],.pg-cell select,.pg-cell textarea{border:1px solid #c7d0d8;background:#f4f8fb;padding:5px 8px;font-size:12px;border-radius:11px;font-family:'Cairo','Tahoma',sans-serif;transition:.18s;box-shadow:inset 2px 2px 4px rgba(0,0,0,0.05),inset -2px -2px 4px rgba(255,255,255,0.5);} 
+    .pg-cell input:focus,.pg-cell select:focus,.pg-cell textarea:focus{outline:none;border-color:#0d63c7;box-shadow:0 0 0 3px rgba(13,99,199,0.25);} 
+  .pg-cell textarea.notes-area{min-height:54px;resize:vertical;}
+    .pg-cell .err{min-height:14px;font-size:11px;font-weight:600;color:#c70000;margin-top:4px;}
+  .span-2{grid-column:span 2;}
+  .span-3{grid-column:span 3;}
+    .xxs{max-width:120px;}
+    .barcode-mode.compact{display:flex;gap:12px;align-items:center;font-size:11px;margin:0 0 4px;flex-wrap:wrap;}
+    .barcode-mode.compact label{font-size:11px;font-weight:600;margin:0;}
+    .regen-btn{background:#0d4d92;color:#fff;border:none;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 4px 10px rgba(13,77,146,0.35);} 
+    .regen-btn:hover{filter:brightness(1.08);} 
+    .inline-flex{display:flex;gap:6px;align-items:center;}
+    .mini-add-btn{background:#0d4d92;color:#fff;border:none;padding:6px 12px;border-radius:12px;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(13,77,146,0.35);}
+    .mini-add-btn:hover{background:#125ea8;}
+    .file-input{font-size:11px;padding:6px 10px;}
+    .image-preview{margin-top:6px;min-height:60px;border:1px dashed #b7c4d0;border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fbfd;position:relative;}
+    .image-preview img{max-width:100%;max-height:100%;display:block;}
+  .form-actions-bottom{display:flex;gap:10px;justify-content:flex-start;margin-top:6px;}
+  .primary-save-btn{background:linear-gradient(135deg,#0d63c7,#0d4d92);color:#fff;border:none;padding:8px 18px;font-size:12.5px;font-weight:700;border-radius:14px;cursor:pointer;box-shadow:0 6px 16px -8px rgba(13,77,146,0.48);transition:.22s;}
+    .primary-save-btn:hover{transform:translateY(-2px);}
+  .secondary-cancel-btn{background:#88949f;color:#fff;border:none;padding:8px 14px;font-size:11.5px;font-weight:600;border-radius:12px;cursor:pointer;box-shadow:0 4px 12px -6px rgba(0,0,0,0.30);}
+    .secondary-cancel-btn:hover{background:#737f89;}
+  /* أزيلت الأنماط القديمة لصندوق المنتجات الحديثة */
+  /* (تم استبدال نمط زر الإضافة بنمط موحد أعلى الصفحة) */
+  </style>
+  <!-- نقل صندوق المنتجات الحديثة داخل .table-wrap أعلى -->
+</body>
+</html>

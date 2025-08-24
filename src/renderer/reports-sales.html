@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>تقارير المبيعات</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+body{background:#fff;font-family:Tahoma,Arial,sans-serif;margin:0;color:#000;font-size:14px;}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#000;color:#fff;border-bottom:2px solid #fff;}
+header h1{margin:0;font-size:20px;}
+button{cursor:pointer;font-family:inherit;font-weight:600;border:2px solid #fff;background:#000;color:#fff;padding:6px 14px;border-radius:4px;font-size:13px;}
+button:hover{background:#111;}
+select,input{font-family:inherit;font-size:13px;padding:6px 8px;border:2px solid #000;border-radius:4px;}
+#filters{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;background:#f5f5f5;border-bottom:2px solid #000;align-items:center;}
+.cards{display:flex;flex-wrap:wrap;gap:12px;padding:12px 14px;}
+.card{flex:1 1 160px;min-width:160px;background:#fff;border:2px solid #000;padding:10px 12px;border-radius:8px;position:relative;}
+.card h3{margin:0 0 6px;font-size:14px;}
+.card .value{font-size:18px;font-weight:700;}
+#chartArea{padding:10px 14px;}
+.chart-row{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch;margin-top:0;}
+.chart-box{background:#fff;border:2px solid #000;border-radius:10px;padding:8px 10px;flex:1 1 340px;min-width:280px;position:relative;box-shadow:0 2px 4px rgba(0,0,0,.05);} 
+.chart-box.wide{flex:2 1 640px;min-width:440px;}
+.chart-title{margin:0 0 8px;font-size:15px;font-weight:700;letter-spacing:.5px;}
+#timelineChart,#payChart{width:100%!important;display:block;}
+.legend{display:flex;gap:14px;margin-top:8px;font-size:12px;flex-wrap:wrap;}
+.lg{display:inline-flex;align-items:center;gap:5px;}
+.lg i{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid #000;}
+@media (max-width:850px){ .chart-box.wide{flex:1 1 100%;} }
+#salesTableWrapper{padding:10px 14px;}
+#salesTable{width:100%;border-collapse:collapse;}
+#salesTable th,#salesTable td{border:1px solid #000;padding:6px 8px;font-size:12px;text-align:center;}
+#salesTable th{background:#eee;}
+#searchBox{min-width:220px;}
+.actions-bar{display:flex;gap:8px;margin-left:auto;}
+.small{font-size:11px;color:#444;}
+.empty{padding:18px;text-align:center;color:#666;font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <button id="backBtn">رجوع</button>
+  <h1>تقارير المبيعات</h1>
+  <div style="flex:1"></div>
+  <div class="actions-bar">
+    <button id="btnExportCSV">CSV</button>
+    <button id="btnExportXLS">Excel</button>
+  </div>
+</header>
+<div id="filters">
+  <label>المدى
+    <select id="period">
+      <option value="today">اليوم</option>
+      <option value="week">هذا الأسبوع</option>
+      <option value="month" selected>هذا الشهر</option>
+      <option value="year">هذه السنة</option>
+    </select>
+  </label>
+  <input type="text" id="searchBox" placeholder="بحث (فاتورة / عميل)" />
+  <span class="small" id="rowsCount"></span>
+</div>
+<div class="cards">
+  <div class="card"><h3>إجمالي المبيعات</h3><div class="value" id="vGross">0</div></div>
+  <div class="card"><h3>الخصومات</h3><div class="value" id="vDiscount">0</div></div>
+  <div class="card"><h3>الضريبة VAT</h3><div class="value" id="vVAT">0</div></div>
+  <div class="card"><h3>الصافي</h3><div class="value" id="vNet">0</div></div>
+  <div class="card"><h3>عدد الفواتير</h3><div class="value" id="vCount">0</div></div>
+  <div class="card"><h3>متوسط الفاتورة</h3><div class="value" id="vAvg">0</div></div>
+  <div style="flex:1 1 100%;display:flex;justify-content:flex-end;margin-top:-4px;">
+    <button id="btnToggleCharts" style="background:#444;border-color:#000;">إظهار الرسوم</button>
+  </div>
+</div>
+<div class="cards" style="margin-top:-10px;">
+  <div class="card"><h3>مبيعات نقد</h3><div class="value" id="vCash">0</div></div>
+  <div class="card"><h3>مبيعات آجل</h3><div class="value" id="vCredit">0</div></div>
+</div>
+<div id="chartArea" style="margin-top:-14px;display:none;">
+  <div class="chart-row">
+    <div class="chart-box wide">
+      <div id="chartIndicators" class="small" style="margin:2px 0 10px;padding:6px 10px;border:1px dashed #7d8b99;border-radius:8px;background:#f2f6f9;display:flex;flex-wrap:wrap;gap:18px;">
+        <span>أعلى يوم: <b id="indPeakDay">-</b> (<span id="indPeakVal">0</span>)</span>
+        <span>متوسط يومي: <b id="indAvgDay">0</b></span>
+        <span>عدد الأيام: <b id="indDays">0</b></span>
+        <span>نسبة الآجل: <b id="indCreditPct">0%</b></span>
+      </div>
+      <h4 class="chart-title">المخطط الزمني (عدد الفواتير)</h4>
+  <canvas id="timelineChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h4 class="chart-title">توزيع طرق الدفع</h4>
+  <canvas id="payChart"></canvas>
+      <div class="legend">
+        <span class="lg"><i style="background:#16a34a"></i> نقد</span>
+        <span class="lg"><i style="background:#dc2626"></i> آجل</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="salesTableWrapper">
+  <table id="salesTable">
+    <thead>
+      <tr>
+        <th>التاريخ</th>
+        <th>رقم الفاتورة</th>
+        <th>العميل</th>
+  <th>الإجمالي</th>
+  <th>الخصم</th>
+  <th>الضريبة</th>
+  <th>الصافي</th>
+  <th>طريقة الدفع</th>
+  <th>المدفوع</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div id="emptyMsg" class="empty" style="display:none;">لا بيانات</div>
+</div>
+<script src="reports-sales.js"></script>
+</body>
+</html>

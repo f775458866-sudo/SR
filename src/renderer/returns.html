@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>مرتجعات المبيعات</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+*{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+body,html{margin:0;padding:0;min-height:100%;background:#f2f5f8;color:#0d2d3a;}
+header.ret-header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:2px solid #000;background:#fff;position:sticky;top:0;z-index:20;}
+header.ret-header h1{margin:0;font-size:22px;font-weight:800;letter-spacing:.5px;}
+.btn{cursor:pointer;font-size:13px;font-weight:700;padding:8px 18px;border:2px solid #000;background:#fff;border-radius:14px;transition:.2s;}
+.btn:hover{background:#eef3f7;}
+.main-grid{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 64px);} 
+@media (max-width:1120px){.main-grid{grid-template-columns:1fr;}}
+.panel{border-left:2px solid #000;background:linear-gradient(145deg,#ffffff,#f4f7fa);padding:18px;display:flex;flex-direction:column;gap:16px;}
+.panel h2{margin:0 0 4px;font-size:16px;font-weight:800;}
+fieldset{border:2px solid #000;border-radius:20px;padding:14px 16px;background:#fff;}
+legend{padding:0 8px;font-weight:800;font-size:13px;}
+input,select,textarea{border:2px solid #000;border-radius:14px;padding:8px 12px;font-size:13px;font-weight:600;width:100%;background:#fff;}
+input:focus,select:focus,textarea:focus{outline:3px solid #b8d7ff;}
+label{display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;margin-bottom:10px;}
+.small-hint{font-size:11px;color:#555;font-weight:600;margin-top:4px;}
+.sales-lookup-box{display:flex;gap:8px;}
+.sales-lookup-box input{flex:1;}
+.inline-btn{padding:8px 12px;min-width:90px;}
+.return-items-table-wrap{overflow:auto;border:2px solid #000;border-radius:22px;background:#fff;padding:14px;}
+.table-wrap{overflow:auto;background:#f7f9fa;padding:10px;border:2px solid #000;border-radius:22px;}
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:920px;}
+th,td{border:2px solid #000;padding:8px 10px;font-size:12px;text-align:center;background:#fff;font-weight:600;}
+th{background:#f0f2f4;font-weight:800;position:sticky;top:0;z-index:5;}
+tbody tr:nth-child(even) td{background:#fafafa;}
+tbody tr:hover td{background:#eef4f7;}
+.badge{display:inline-block;padding:3px 8px;border:2px solid #000;border-radius:20px;background:#fff;font-size:11px;font-weight:700;}
+.status-bar{display:flex;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:8px;border-top:2px solid #000;}
+.glass{backdrop-filter:blur(12px);background:rgba(255,255,255,0.55);}
+.return-log{max-height:260px;overflow:auto;border:2px dashed #000;border-radius:18px;padding:10px;font-size:11.5px;background:#fff;}
+.return-log div{padding:4px 4px;border-bottom:1px solid #ddd;}
+.tag-green{background:#d9fbe3;}
+.tag-red{background:#ffe1e1;}
+.fade-in{animation:fade .4s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+  <header class="ret-header">
+    <button id="backBtn" class="btn">⟵ رجوع</button>
+    <h1>مرتجعات المبيعات</h1>
+    <div style="flex:1"></div>
+    <button id="viewReturnsBtn" class="btn">سجل المرتجعات</button>
+  </header>
+  <div class="main-grid">
+    <div class="panel">
+      <h2>إنشاء مرتجع</h2>
+      <fieldset>
+        <legend>فاتورة</legend>
+        <label>رقم الفاتورة
+          <div class="sales-lookup-box">
+            <input type="text" id="invoiceSearch" placeholder="ادخل رقم الفاتورة" />
+            <button class="btn inline-btn" id="loadInvoiceBtn">تحميل</button>
+          </div>
+        </label>
+        <div id="invoiceMeta" style="font-size:12px;font-weight:600;color:#222;min-height:20px;line-height:1.4"></div>
+      </fieldset>
+      <fieldset>
+        <legend>البنود</legend>
+        <div class="return-items-table-wrap">
+          <table id="saleItemsReturnTable">
+            <thead><tr><th>المنتج</th><th>المباع</th><th>مرتجع سابق</th><th>متبقي</th><th style="min-width:120px">كمية مرتجع</th><th>سبب</th><th>تنفيذ</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="small-hint">أدخل كمية مرتجع لا تتجاوز المتبقي، ثم اضغط تنفيذ.</div>
+      </fieldset>
+      <fieldset>
+        <legend>نتائج</legend>
+        <div class="return-log" id="returnLog"></div>
+      </fieldset>
+      <div class="status-bar" id="statusBar"></div>
+    </div>
+    <div class="table-wrap">
+      <table id="returnsTable">
+        <thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>المنتج</th><th>الكمية</th><th>المبلغ</th><th>سبب</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script src="navigation.js"></script>
+  <script src="returns.js"></script>
+</body>
+</html>

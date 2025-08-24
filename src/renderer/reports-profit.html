@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>تقرير الأرباح</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+body{background:#fff;font-family:Tahoma,Arial,sans-serif;margin:0;color:#000;font-size:14px;}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#000;color:#fff;border-bottom:2px solid #fff;}
+header h1{margin:0;font-size:20px;}
+button{cursor:pointer;font-family:inherit;font-weight:600;border:2px solid #fff;background:#000;color:#fff;padding:6px 14px;border-radius:4px;font-size:13px;}
+button:hover{background:#111;}
+select{font-family:inherit;font-size:13px;padding:6px 8px;border:2px solid #000;border-radius:4px;}
+#filters{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;background:#f5f5f5;border-bottom:2px solid #000;align-items:center;}
+.cards{display:flex;flex-wrap:wrap;gap:12px;padding:12px 14px;}
+.card{flex:1 1 180px;min-width:180px;background:#fff;border:2px solid #000;padding:10px 12px;border-radius:8px;}
+.card h3{margin:0 0 6px;font-size:14px;}
+.card .value{font-size:18px;font-weight:700;}
+.flex-row{display:flex;flex-wrap:wrap;gap:24px;padding:10px 14px;}
+.panel{flex:1 1 340px;min-width:320px;border:2px solid #000;padding:10px 12px;border-radius:8px;background:#fff;}
+.panel h3{margin:0 0 8px;font-size:15px;}
+#chartArea{padding:10px 14px;}
+.list-mini{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:12px;}
+.list-mini li{display:flex;justify-content:space-between;border:1px solid #000;padding:4px 6px;border-radius:4px;}
+.badge{background:#0d63c7;color:#fff;padding:2px 6px;border-radius:3px;font-size:11px;}
+.small{font-size:11px;color:#444;}
+</style>
+</head>
+<body>
+<header>
+  <button id="backBtn">رجوع</button>
+  <h1>تقرير الأرباح</h1>
+  <div style="flex:1"></div>
+</header>
+<div id="filters">
+  <label>المدى
+    <select id="period">
+      <option value="month" selected>هذا الشهر</option>
+      <option value="year">هذه السنة</option>
+    </select>
+  </label>
+</div>
+<div class="cards">
+  <div class="card"><h3>صافي المبيعات</h3><div class="value" id="salesTotal">0</div></div>
+  <div class="card"><h3>المشتريات</h3><div class="value" id="purchasesTotal">0</div></div>
+  <div class="card"><h3>المصروفات</h3><div class="value" id="expensesTotal">0</div></div>
+  <div class="card"><h3>صافي الربح</h3><div class="value" id="netProfit">0</div></div>
+  <div class="card"><h3>هامش الربح</h3><div class="value" id="marginPct">0%</div></div>
+</div>
+<div id="chartArea">
+  <canvas id="productsChart" height="180" style="width:100%;max-width:880px;border:1px solid #000;border-radius:6px;background:#fff;"></canvas>
+</div>
+<div class="flex-row">
+  <div class="panel">
+    <h3>أفضل 5 منتجات</h3>
+    <ul id="topList" class="list-mini"></ul>
+  </div>
+  <div class="panel">
+    <h3>أقل 5 منتجات</h3>
+    <ul id="bottomList" class="list-mini"></ul>
+  </div>
+</div>
+<script src="reports-profit.js"></script>
+</body>
+</html>

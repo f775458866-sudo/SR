@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>فاتورة ضريبية مبسطة</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --border-color:#333;
+      --dashed:#999;
+      --paper-width:320px; /* يمكن ضبطه لاحقاً 280px / 300px */
+    }
+    * { box-sizing:border-box; }
+    html,body { margin:0; padding:0; font-family:'IBM Plex Sans Arabic', system-ui, sans-serif; }
+    body { background:#f4f4f4; padding:18px 0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .receipt-wrapper { display:flex; justify-content:center; }
+    .receipt { width:var(--paper-width); background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12); padding:14px 16px 20px; color:#111; font-size:13px; line-height:1.45; }
+    .receipt header { text-align:center; padding-bottom:8px; border-bottom:1px dashed #ccc; margin-bottom:8px; }
+    .brand-name { font-size:16px; font-weight:600; letter-spacing:.5px; }
+    .muted { color:#555; font-size:12px; }
+    h1.title { margin:6px 0 10px; font-size:14px; text-align:center; font-weight:600; }
+
+    .info { margin:4px 0 10px; font-size:12.5px; }
+    .info .row { display:flex; justify-content:space-between; gap:8px; margin:2px 0; }
+    .info .row span.label { font-weight:500; min-width:84px; display:inline-block; color:#000; }
+
+    table.items { width:100%; border-collapse:collapse; font-size:12px; margin-top:4px; }
+    table.items thead th { font-weight:600; padding:4px 2px 6px; border-bottom:1px solid var(--border-color); text-align:center; font-size:12px; }
+    table.items tbody td { padding:4px 2px; text-align:center; vertical-align:top; }
+    table.items tbody tr { border-bottom:1px dashed var(--dashed); }
+    table.items tbody tr:last-child { border-bottom:none; }
+    table.items td.name { text-align:right; }
+
+    /*Totals*/
+    .totals { margin-top:10px; }
+    .totals table { width:100%; border-collapse:collapse; font-size:12.5px; }
+    .totals td { padding:4px 0; }
+    .totals td.label { font-weight:500; text-align:right; }
+    .totals td.val { text-align:left; font-variant-numeric:tabular-nums; }
+    .totals tr.final-total td { font-size:14px; font-weight:700; padding:6px 0; border-top:2px solid var(--border-color); border-bottom:2px solid var(--border-color); }
+
+    footer { margin-top:14px; border-top:1px dashed #ccc; padding-top:10px; text-align:center; }
+  /* صندوق QR تم تبسيطه بدون إطار حسب طلب العميل */
+  .qr { margin:6px auto 10px; width:130px; height:130px; display:flex; align-items:center; justify-content:center; }
+    footer .thanks { font-size:12px; font-weight:500; margin-top:4px; }
+
+    .no-print-bar { text-align:center; margin-top:16px; }
+    button.no-print { background:#222; color:#fff; border:none; cursor:pointer; font-family:inherit; padding:10px 18px; font-size:14px; border-radius:4px; box-shadow:0 2px 4px rgba(0,0,0,.25); }
+    button.no-print:hover { background:#000; }
+
+    /* طباعة */
+    @media print {
+      body { background:#fff; padding:0; }
+      .receipt { box-shadow:none; width:100%; margin:0; padding:10px 10px 14px; }
+      .no-print { display:none !important; }
+      .no-print-bar { display:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="receipt-wrapper">
+    <div class="receipt" id="receipt">
+      <header>
+        <div class="brand-name" id="bizName">مؤسسة مثال التجارية</div>
+        <div class="muted">هاتف: <span id="bizPhone">0500000000</span></div>
+        <div class="muted">السجل التجاري: <span id="bizCR">1010101010</span></div>
+        <div class="muted">الرقم الضريبي: <span id="bizVAT">300000000300000</span></div>
+      </header>
+
+  <!-- رمز QR (زاتكا) يوضع أعلى الفاتورة لسهولة المسح -->
+  <div class="qr" id="qrBox" aria-label="رمز الاستجابة السريع للفاتورة"></div>
+
+  <h1 class="title">فاتورة ضريبية مبسطة</h1>
+
+      <section class="info" aria-label="invoice-and-customer">
+        <div class="row"><span class="label">رقم الفاتورة:</span><span id="invNo">INV-2025-0001</span></div>
+        <div class="row"><span class="label">التاريخ:</span><span id="invDate">2025-08-20 12:35</span></div>
+        <div class="row"><span class="label">العميل:</span><span id="custName">عميل نقدي</span></div>
+        <div class="row"><span class="label">رقم ضريبي للعميل:</span><span id="custVAT">-</span></div>
+      </section>
+
+      <table class="items" aria-label="products">
+        <thead>
+          <tr>
+            <th style="width:42%; text-align:right;">الصنف</th>
+            <th style="width:14%;">الكمية</th>
+            <th style="width:22%;">السعر</th>
+            <th style="width:22%;">الإجمالي</th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody">
+          <!-- أمثلة أصناف -->
+          <tr>
+            <td class="name">منتج رقم 1</td>
+            <td>2</td>
+            <td>25.00</td>
+            <td>50.00</td>
+          </tr>
+          <tr>
+            <td class="name">منتج طويل الاسم للاختبار</td>
+            <td>1</td>
+            <td>120.00</td>
+            <td>120.00</td>
+          </tr>
+          <tr>
+            <td class="name">منتج 3</td>
+            <td>3</td>
+            <td>10.00</td>
+            <td>30.00</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <section class="totals" aria-label="totals">
+        <table>
+          <tbody>
+            <tr>
+              <td class="label">الإجمالي قبل الضريبة</td>
+              <td class="val" id="tSubtotal">180.00</td>
+            </tr>
+            <tr>
+              <td class="label">الخصم</td>
+              <td class="val" id="tDiscount">0.00</td>
+            </tr>
+            <tr>
+              <td class="label">ضريبة القيمة المضافة (15%)</td>
+              <td class="val" id="tVAT">27.00</td>
+            </tr>
+            <tr class="final-total">
+              <td class="label">الصافي المستحق</td>
+              <td class="val" id="tTotal">207.00</td>
+            </tr>
+            <tr>
+              <td class="label">المسدد</td>
+              <td class="val" id="tPaid">207.00</td>
+            </tr>
+            <tr>
+              <td class="label">المتبقي</td>
+              <td class="val" id="tRemain">0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+  <footer>
+        <div class="thanks">شكراً لتسوقكم معنا</div>
+        <div style="margin-top:4px; font-size:11px; color:#666;">الأسعار تشمل ضريبة القيمة المضافة</div>
+      </footer>
+    </div>
+  </div>
+  <div class="no-print-bar">
+    <button class="no-print" onclick="window.print()">طباعة</button>
+  </div>
+  <script src="../src/renderer/qr-lite.js"></script>
+  <script>
+  // تحميل مولد QR القياسي المبسط (نسخة موحدة)
+  // ملاحظة: يمكن دمجه في حزمة لاحقاً، هنا استدعاء سريع عبر إدراج الملف في نافذة الطباعة (يتم حقنه من السياق الرئيسي إذا لزم)
+    // إزالة الحد المتقطع من آخر صف لو تم التعديل ديناميكياً
+    (function ensureLastRowBorder(){
+      const body = document.getElementById('itemsBody');
+      function clean(){
+        const rows = Array.from(body.querySelectorAll('tr'));
+        rows.forEach(r=> r.style.borderBottom='1px dashed var(--dashed)');
+        if(rows.length){ rows[rows.length-1].style.borderBottom='none'; }
+      }
+      const obs = new MutationObserver(clean); obs.observe(body,{childList:true}); clean();
+    })();
+
+    // ================== تعبئة بيانات الفاتورة + توليد QR زاتكا ==================
+    (function(){
+      function qs(n){ return new URLSearchParams(location.search).get(n); }
+      function fmt(n){ return (parseFloat(n)||0).toFixed(2); }
+  // دوال مساعدة للـ TLV (تم تبسيط QR بالاعتماد على __qrLite)
+      function utf8Bytes(str){ const out=[]; for(let i=0;i<str.length;i++){ let c=str.charCodeAt(i); if(c<0x80) out.push(c); else if(c<0x800) out.push(0xC0|(c>>6),0x80|(c&63)); else if(c<0x10000) out.push(0xE0|(c>>12),0x80|((c>>6)&63),0x80|(c&63)); else out.push(0xF0|(c>>18),0x80|((c>>12)&63),0x80|((c>>6)&63),0x80|(c&63)); } return out; }
+      function tlvEncode(fields){ const bytes=[]; for(const [tag,val] of fields){ const data=utf8Bytes(val||''); bytes.push(tag); bytes.push(data.length); bytes.push(...data); } return bytes; }
+      function bytesToBase64(bytes){ let s=''; for(const b of bytes) s+=String.fromCharCode(b); return btoa(s); }
+      // ZATCA TLV Tags: (1) Seller Name, (2) VAT Number, (3) Timestamp (ISO8601), (4) Total (with VAT), (5) VAT Amount
+      function makeQr(seller,vatNo,iso,total,vat){
+        try {
+          const tlv=tlvEncode([[1,seller],[2,vatNo],[3,iso],[4,''+total],[5,''+vat]]);
+          const b64=bytesToBase64(tlv);
+          console.debug('QR Base64 length=', b64.length);
+          return window.__qrLite.generateQR(b64, {level:'Q', scale:3});
+  } catch(e){ return `<div style='font:10px monospace;color:#900;'>QR Err: ${e.message||'?'}</div>`; }
+      }
+
+      async function load(){
+        const sid = qs('sale_id'); const inv = qs('invoice');
+        let sale=null;
+        if(sid){ try { const r=await window.api.saleGet(parseInt(sid)); if(r&&r.ok) sale=r.sale; } catch(_){ } }
+        if(!sale && inv){ try { const r2=await window.api.saleGetByInvoice(inv); if(r2&&r2.ok) sale=r2.sale; } catch(_){ } }
+        if(!sale){ return; }
+        // الإعدادات
+        let settings={};
+        try { const st=await window.api.settingsList(); if(st.ok) st.rows.forEach(r=> settings[r.key]=r.value); } catch(_){ }
+        // ترويسة
+        if(settings.company_name) document.getElementById('bizName').textContent = settings.company_name;
+        if(settings.company_phone) document.getElementById('bizPhone').textContent = settings.company_phone;
+        if(settings.cr_number) document.getElementById('bizCR').textContent = settings.cr_number;
+        if(settings.vat_number) document.getElementById('bizVAT').textContent = settings.vat_number;
+        // عميل
+        let custName='عميل نقدي', custVat='-';
+        if(sale.customer_id){ try { const cl=await window.api.customersList(''); if(cl.ok){ const c=cl.rows.find(x=> x.id===sale.customer_id); if(c){ custName=c.name||custName; custVat=c.vat||custVat; } } } catch(_){ }
+        }
+        document.getElementById('custName').textContent = custName;
+        document.getElementById('custVAT').textContent = custVat||'-';
+        // أرقام فاتورة
+        document.getElementById('invNo').textContent = sale.invoice_no || sale.id;
+        document.getElementById('invDate').textContent = (sale.created_at||'').replace('T',' ').slice(0,16);
+        // العناصر
+        const body = document.getElementById('itemsBody');
+        const vatRate = (sale.vat && sale.subtotal)? (sale.vat / sale.subtotal) : 0.15;
+        body.innerHTML = (sale.items||[]).map(it=>{
+          const unitInc = +(it.price||0);
+          const lineInc = unitInc * (it.qty||0);
+          return `<tr><td class='name'>${(it.product_name||it.name||'')}</td><td>${it.qty||0}</td><td>${unitInc.toFixed(2)}</td><td>${lineInc.toFixed(2)}</td></tr>`;
+        }).join('');
+        // المبالغ
+        document.getElementById('tSubtotal').textContent = fmt(sale.subtotal||0);
+        document.getElementById('tDiscount').textContent = fmt(sale.discount||0);
+        document.getElementById('tVAT').textContent = fmt(sale.vat||0);
+        document.getElementById('tTotal').textContent = fmt(sale.total||0);
+        document.getElementById('tPaid').textContent = fmt(sale.paid||0);
+        const remain = (sale.total||0) - (sale.paid||0);
+        document.getElementById('tRemain').textContent = fmt(remain<0?0:remain);
+        // QR
+        const qrBox = document.getElementById('qrBox');
+  // تقليل حجم TLV: قص اسم المورد و إزالة الميلي ثانية من التوقيت لتفادي تجاوز السعة
+  let seller = (settings.company_name || 'Shop').trim();
+  if(seller.length>40) seller = seller.slice(0,40);
+  const vatNo = (settings.vat_number||'').trim();
+  let iso = new Date(sale.created_at|| new Date()).toISOString().replace(/\.\d{3}Z$/,'Z');
+        try {
+          const tlv=tlvEncode([[1,seller],[2,vatNo],[3,iso],[4,''+(sale.total||0)],[5,''+(sale.vat||0)]]);
+          const b64=bytesToBase64(tlv);
+          if(window.api && window.api.generateQrSvg){
+            const r = await window.api.generateQrSvg(b64);
+            if(r && r.ok && r.svg){ qrBox.innerHTML = r.svg; return; }
+          }
+          if(window.__qrLite){ qrBox.innerHTML = window.__qrLite.generateQR(b64,{level:'Q',scale:3}); return; }
+          qrBox.textContent = 'QR Fallback Fail';
+        } catch(_){ qrBox.textContent='QR Fallback Err'; }
+      }
+      // نفّذ فقط داخل تطبيق (توفر window.api)
+      if(window.api){ load(); }
+    })();
+  </script>
+</body>
+</html>

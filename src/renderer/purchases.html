@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فاتورة شراء</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none';" />
+  <style>
+    *{box-sizing:border-box;font-family:Tahoma,Arial,sans-serif;}
+    body,html{margin:0;padding:0;height:100%;background:#f1f4f7;color:#0d2d3a;}
+    .purchase-shell{display:flex;flex-direction:column;height:100vh;}
+    .top-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fff;border-bottom:2px solid #000;}
+    .top-bar h1{margin:0;font-size:18px;font-weight:800;}
+    .top-bar button{cursor:pointer;font-size:13px;font-weight:700;padding:7px 14px;border:2px solid #000;background:#fff;border-radius:10px;}
+    .top-bar button:hover{background:#eef2f5;}
+    .invoice-head{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:14px 16px;background:#fafafa;border-bottom:2px solid #000;}
+    .invoice-head .field{display:flex;flex-direction:column;}
+    .invoice-head label{font-size:11px;font-weight:700;margin-bottom:4px;}
+    .invoice-head input,.invoice-head select{border:2px solid #000;border-radius:12px;padding:8px 10px;font-size:13px;background:#fff;font-weight:600;}
+    .items-wrap{flex:1 1 auto;overflow:auto;padding:0;background:#f5f7f9;border-bottom:2px solid #000;}
+    table.items{width:100%;border-collapse:separate;border-spacing:0;min-width:880px;}
+    table.items th,table.items td{border:2px solid #000;padding:6px 8px;font-size:12px;text-align:center;background:#fff;}
+    table.items th{background:#f0f2f4;font-weight:800;}
+    table.items input{width:100%;border:1px solid #000;padding:4px 4px;font-size:12px;text-align:center;border-radius:6px;font-weight:600;}
+    table.items input.name{text-align:right;}
+    .del-btn{cursor:pointer;border:2px solid #000;background:#fff;padding:2px 6px;border-radius:6px;font-weight:700;}
+    .del-btn:hover{background:#ffe5e5;}
+    .footer-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:12px 14px;background:#fff;border-top:2px solid #000;}
+    .tot-box{display:flex;flex-direction:column;min-width:150px;border:2px solid #000;border-radius:14px;padding:8px 10px;background:#fafafa;}
+    .tot-box label{font-size:11px;font-weight:700;margin-bottom:4px;text-align:center;}
+    .tot-box .v{font-size:16px;font-weight:800;text-align:center;}
+    .footer-bar button{cursor:pointer;font-size:14px;font-weight:800;padding:10px 18px;border:2px solid #000;background:#fff;border-radius:14px;}
+    .footer-bar button:hover{background:#eef3f6;}
+    .suggest-box{position:absolute;background:#fff;border:2px solid #000;z-index:200;min-width:240px;max-height:240px;overflow:auto;display:none;}
+    .suggest-box button{display:block;width:100%;text-align:right;background:#fff;border:0;border-bottom:1px solid #eee;padding:6px 10px;font-size:12px;cursor:pointer;}
+    .suggest-box button:hover{background:#f1f5f9;}
+    .error-field{background:#fff4f4 !important;border-color:#c62828 !important;}
+    @media (max-width:680px){ .invoice-head{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));} table.items{min-width:720px;} }
+
+  /* ===== تحسين التصميم (طبقة تجميلية) ===== */
+  body{background:linear-gradient(135deg,#f2f6fb,#e3ecf5 50%,#d9e4ef);}    
+  .top-bar{background:linear-gradient(120deg,#ffffff,#f3f7fb);box-shadow:0 4px 10px -4px rgba(0,0,0,0.12);border-bottom:2px solid #0d2d3a;position:sticky;top:0;z-index:30;}
+  .top-bar h1{letter-spacing:.5px;}
+  .top-bar button{background:#fff;transition:.22s ease;box-shadow:0 2px 4px rgba(0,0,0,0.04);} 
+  .top-bar button:hover{transform:translateY(-2px);box-shadow:0 6px 14px -4px rgba(0,0,0,0.18);}
+  .invoice-head{background:rgba(255,255,255,0.65);backdrop-filter:blur(6px);border:2px solid #0d2d3a;border-right:0;border-left:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4);}    
+  .invoice-head input,.invoice-head select{background:#fffdfd;box-shadow:0 1px 2px rgba(0,0,0,0.06);}    
+  .invoice-head input:focus,.invoice-head select:focus{box-shadow:0 0 0 3px #bcd9ff,0 1px 2px rgba(0,0,0,0.08);}   
+  .items-wrap{background:linear-gradient(180deg,#f1f6fa,#eef3f7);} 
+  table.items th{background:linear-gradient(180deg,#f5f8fa,#e9eff4);text-transform:uppercase;letter-spacing:.5px;font-size:11px;} 
+  table.items td{transition:background .15s ease;} 
+  table.items tbody tr:hover td{background:#e7f2fa;} 
+  .footer-bar{background:rgba(255,255,255,0.82);backdrop-filter:blur(8px);border-top:2px solid #0d2d3a;position:sticky;bottom:0;z-index:25;box-shadow:0 -4px 12px -6px rgba(0,0,0,0.18);} 
+  .tot-box{background:linear-gradient(135deg,#ffffff,#f2f7fb);position:relative;overflow:hidden;} 
+  .tot-box:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 140% -10%,rgba(13,77,146,0.18),transparent 60%);mix-blend-mode:overlay;pointer-events:none;} 
+  .tot-box .v{font-family:"Cairo",Tahoma,Arial,sans-serif;letter-spacing:.5px;} 
+  .footer-bar button{background:linear-gradient(135deg,#ffffff,#f3f9ff);box-shadow:0 2px 4px rgba(0,0,0,0.06);transition:.25s cubic-bezier(.4,.2,.2,1);} 
+  .footer-bar button:hover{background:linear-gradient(135deg,#fff,#eaf4ff);transform:translateY(-2px);box-shadow:0 6px 14px -4px rgba(0,0,0,0.22);} 
+  .footer-bar button:active{transform:translateY(0);box-shadow:0 2px 6px -2px rgba(0,0,0,0.25);} 
+  .suggest-box{border-radius:16px;box-shadow:0 10px 26px -10px rgba(0,0,0,0.25),0 2px 6px rgba(0,0,0,0.06);overflow:hidden;} 
+  .suggest-box button{font-weight:600;} 
+  .suggest-box button:hover{background:#e9f4ff;} 
+  .del-btn{background:#fff;transition:.2s;} 
+  .del-btn:hover{background:#ffe3e3;color:#b30000;} 
+  /* تحسين لوحة المرتجع المشتريات الكاملة */
+  #purchaseReturnPanel > div > div:first-child{background:linear-gradient(120deg,#ffffff,#f0f6fb)!important;}
+  #purchaseReturnPanel h2{background:linear-gradient(90deg,#0d2d3a,#13609c);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  #purchaseReturnPanel fieldset{background:linear-gradient(145deg,#ffffff,#f5f9fc);} 
+  #purchaseReturnPanel button{transition:.22s;}
+  #purchaseReturnPanel button:hover{transform:translateY(-2px);} 
+  #purchaseReturnPanel table thead th{background:linear-gradient(180deg,#f3f6f9,#e6edf3)!important;} 
+  /* مؤشرات تفاعلية */
+  tr[data-item]{transition:background .18s,transform .18s;} 
+  tr[data-item]:hover{background:#e4f1fa!important;} 
+  tr[data-item]:active{transform:scale(.985);} 
+  /* شريط تمرير أنيق */
+  ::-webkit-scrollbar{width:10px;height:10px;} 
+  ::-webkit-scrollbar-track{background:#e2e8ef;border-radius:8px;} 
+  ::-webkit-scrollbar-thumb{background:#97b4c7;border:2px solid #e2e8ef;border-radius:8px;} 
+  ::-webkit-scrollbar-thumb:hover{background:#6f95ac;} 
+  /* حركة خفيفة عند الظهور */
+  .purchase-shell, #purchaseReturnPanel > div{animation:fadeSlide .4s ease;} 
+  @keyframes fadeSlide{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  /* تمييز الحقول بالأخطاء بنفس التناسق */
+  .error-field{box-shadow:0 0 0 3px rgba(198,40,40,0.2);} 
+  /* دعم الوضع الليلي مستقبلاً بإضافة body.dark */
+  body.dark{background:#0d1c26;} body.dark .top-bar{background:#132a37;color:#fff;} body.dark table.items th{background:#173848;color:#e9f3fa;} 
+  </style>
+</head>
+<body class="dashboard-mode">
+  <div class="purchase-shell">
+    <div class="top-bar">
+      <button id="backBtn">⟵ رجوع</button>
+      <h1>فاتورة شراء</h1>
+      <div style="flex:1"></div>
+      <button id="btnNewPurchase">فاتورة جديدة</button>
+  <button id="btnShowReturn" style="background:#fff5d6;">مرتجع مشتريات</button>
+  <button id="btnPurchasesReports" style="background:#e3f3ff;">تقارير المشتريات</button>
+    </div>
+    <div class="invoice-head">
+      <div class="field"><label>رقم الفاتورة</label><input id="purInvoiceNo" type="text" readonly></div>
+      <div class="field"><label>اختر مورد</label><select id="purSupplierSelect"></select></div>
+      <div class="field"><label>اسم المورد</label><input id="purSupplierName" type="text" readonly></div>
+      <div class="field"><label>تاريخ الفاتورة</label><input id="purDate" type="date"></div>
+  <div class="field"><label>نوع الدفع</label><select id="purPayType"><option value="cash" selected>نقدًا</option><option value="credit">آجل</option></select></div>
+    </div>
+    <div class="items-wrap">
+      <table class="items" id="purItemsTable">
+        <thead><tr>
+          <th style="width:80px;">إجراءات</th>
+          <th>اسم المنتج</th>
+          <th>الكمية</th>
+          <th>سعر الشراء قبل الضريبة</th>
+          <th>الضريبة</th>
+          <th>الإجمالي شامل الضريبة</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="footer-bar">
+      <div class="tot-box"><label>الإجمالي قبل الضريبة</label><div class="v" id="purBeforeVat">0.00</div></div>
+      <div class="tot-box"><label>الضريبة (VAT)</label><div class="v" id="purVat">0.00</div></div>
+      <div class="tot-box"><label>الصافي</label><div class="v" id="purNet">0.00</div></div>
+  <button id="purUpdateBtn" style="display:none;background:#ffd447;">حفظ التعديلات</button>
+      <button id="purSaveBtn">حفظ</button>
+      <button id="purSavePrintBtn">حفظ وطباعة</button>
+    </div>
+  </div>
+  <!-- لوحة تقارير المشتريات -->
+  <div id="purchasesReportsPanel" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.35);backdrop-filter:blur(3px);">
+    <div style="background:#fff;border:2px solid #000;border-radius:0;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:2px solid #000;background:#f1f5f9;">
+        <h2 style="margin:0;font-size:18px;font-weight:800;">تقارير المشتريات</h2>
+        <div style="flex:1"></div>
+        <button id="closePurchasesReports" style="border:2px solid #000;background:#fff;border-radius:12px;padding:6px 12px;font-weight:700;cursor:pointer;">إغلاق</button>
+      </div>
+      <div style="padding:12px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;border-bottom:2px solid #000;background:#fafafa;">
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;">من تاريخ
+          <input type="date" id="repFrom" style="border:2px solid #000;border-radius:10px;padding:6px 8px;font-size:13px;font-weight:600;">
+        </label>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;">إلى تاريخ
+          <input type="date" id="repTo" style="border:2px solid #000;border-radius:10px;padding:6px 8px;font-size:13px;font-weight:600;">
+        </label>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;">بحث نصي
+          <input type="text" id="repSearch" placeholder="فاتورة / مورد" style="border:2px solid #000;border-radius:10px;padding:6px 8px;font-size:13px;font-weight:600;min-width:200px;">
+        </label>
+        <button id="repFilterBtn" style="border:2px solid #000;border-radius:14px;padding:8px 16px;font-weight:800;font-size:13px;background:#fff;cursor:pointer;">تطبيق الفلتر</button>
+        <div id="repStats" style="font-size:12px;font-weight:700;margin-inline-start:auto;padding:6px 10px;background:#eef5fa;border:2px solid #000;border-radius:14px;">—</div>
+      </div>
+      <div style="flex:1;overflow:auto;background:#f6f9fb;">
+        <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:920px;">
+          <thead>
+            <tr>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">#</th>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">رقم الفاتورة</th>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">المورد</th>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">الإجمالي</th>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">الضريبة</th>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">طريقة الدفع</th>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">التاريخ</th>
+              <th style="border:2px solid #000;background:#e9eef2;padding:6px 8px;font-size:12px;">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="repPurchasesTbody"></tbody>
+        </table>
+      </div>
+      <div style="padding:8px 14px;font-size:11.5px;font-weight:600;border-top:2px solid #000;background:#fff;">إظهار فواتير المشتريات حسب الفترة. اترك الحقول فارغة لإظهار الكل.</div>
+    </div>
+  </div>
+  <!-- لوحة مرتجع المشتريات -->
+  <div id="purchaseReturnPanel" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.25);backdrop-filter:blur(2px);">
+    <div style="background:#fff;border:2px solid #000;border-radius:0;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:2px solid #000;background:#f7f9fb;">
+        <h2 style="margin:0;font-size:18px;font-weight:800;">مرتجع مشتريات</h2>
+        <div style="flex:1"></div>
+        <button id="closeReturnPanel" class="top-close" style="border:2px solid #000;background:#fff;border-radius:12px;padding:6px 12px;font-weight:700;cursor:pointer;">إغلاق</button>
+      </div>
+      <div style="display:grid;grid-template-columns:340px 1fr;flex:1;min-height:0;">
+        <div style="border-left:2px solid #000;display:flex;flex-direction:column;padding:14px 14px;gap:14px;background:#fafafa;overflow:auto;">
+          <fieldset style="border:2px solid #000;border-radius:20px;padding:12px 14px;">
+            <legend style="padding:0 6px;font-weight:800;font-size:13px;">فاتورة شراء</legend>
+            <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;margin-bottom:8px;">رقم الفاتورة
+              <div style="display:flex;gap:6px;">
+                <input id="retPurInvoiceSearch" type="text" style="flex:1;border:2px solid #000;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:600;" placeholder="أدخل رقم الفاتورة" />
+                <button id="retLoadInvoiceBtn" style="border:2px solid #000;border-radius:12px;padding:8px 14px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;">تحميل</button>
+              </div>
+            </label>
+            <div id="retInvoiceMeta" style="font-size:11.5px;font-weight:600;min-height:32px;line-height:1.5;color:#222;">—</div>
+          </fieldset>
+          <fieldset style="border:2px solid #000;border-radius:20px;padding:12px 14px;">
+            <legend style="padding:0 6px;font-weight:800;font-size:13px;">تفاصيل البند</legend>
+            <div id="retItemDetails" style="font-size:12px;font-weight:600;line-height:1.6;min-height:120px;">اختر بندًا من الجدول</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;">الكمية المرتجعة الآن
+                <input id="retQtyInput" type="number" min="1" style="border:2px solid #000;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:600;" disabled />
+              </label>
+              <label style="display:flex;flex-direction:column;font-size:12px;font-weight:700;gap:4px;">سبب الإرجاع
+                <input id="retReasonInput" type="text" placeholder="اختياري" style="border:2px solid #000;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:600;" disabled />
+              </label>
+              <button id="retDoReturnBtn" style="border:2px solid #000;border-radius:16px;padding:10px 18px;font-size:13px;font-weight:800;background:#fff;cursor:pointer;" disabled>تنفيذ المرتجع</button>
+            </div>
+          </fieldset>
+          <fieldset style="border:2px solid #000;border-radius:20px;padding:10px 14px;">
+            <legend style="padding:0 6px;font-weight:800;font-size:13px;">السجل</legend>
+            <div id="retLog" style="max-height:160px;overflow:auto;font-size:11.5px;font-weight:600;line-height:1.5;background:#fff;border:2px dashed #000;border-radius:16px;padding:8px 10px;">—</div>
+          </fieldset>
+          <div id="retStatusBar" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;overflow:hidden;">
+          <div style="padding:10px 14px;font-size:13px;font-weight:700;border-bottom:2px solid #000;background:#fff;">بنود الفاتورة</div>
+          <div style="flex:1;overflow:auto;background:#f6f9fb;">
+            <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:760px;">
+              <thead><tr><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">المنتج</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">الكمية</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">مرتجع سابق</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">متبقي</th><th style="border:2px solid #000;background:#f0f2f4;padding:6px 8px;font-size:12px;">سعر شامل</th></tr></thead>
+              <tbody id="retItemsTbody"></tbody>
+            </table>
+          </div>
+          <div style="padding:8px 14px;font-size:11.5px;font-weight:600;border-top:2px solid #000;background:#fff;">اختر بنداً ثم أدخل الكمية المراد إرجاعها.</div>
+          <div style="padding:10px 14px;">
+            <div style="max-height:160px;overflow:auto;border:2px solid #000;border-radius:18px;background:#fff;">
+              <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:640px;">
+                <thead><tr><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">التاريخ</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">الفاتورة</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">المنتج</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">الكمية</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">المبلغ</th><th style="border:2px solid #000;background:#fafafa;padding:6px 8px;font-size:12px;">السبب</th></tr></thead>
+                <tbody id="retHistoryTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="navigation.js"></script>
+  <script src="purchases.js"></script>
+</body>
+</html>
